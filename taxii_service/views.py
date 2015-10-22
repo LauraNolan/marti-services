@@ -16,9 +16,13 @@ logger = logging.getLogger(__name__)
 
 @user_passes_test(user_can_view_data)
 def taxii_agent(request):
-
+    print "Going to call the execute taxii agent function..."
     # Use service configuration from DB.
-    result = handlers.execute_taxii_agent(analyst=request.user.username, method="TAXII Agent Web")
+    feed = None
+    if 'feed' in request.GET:
+         feed = request.GET['feed']
+    result = handlers.execute_taxii_agent(analyst=request.user.username, method="TAXII Agent Web",
+                                         feed=feed)
 
     return render_to_response('taxii_agent_results.html', {'result': result}, RequestContext(request))
 
