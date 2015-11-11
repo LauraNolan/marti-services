@@ -129,6 +129,11 @@ class TAXIIServiceConfigForm(forms.Form):
                                        initial=False,
                                        help_text="Create events for all STIX documents.")
 
+    auto_polling = forms.BooleanField(required=False,
+                                       label="Auto Polling",
+                                       initial=False,
+                                       help_text="Auto poll Taxii feeds.")
+
     certfiles = forms.CharField(required=True,
                                 label="Configuration",
                                 initial='',

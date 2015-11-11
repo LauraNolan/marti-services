@@ -15,15 +15,17 @@ class Taxii(CritsDocument, Document):
         "allow_inheritance": False,
         "collection": 'taxii',
         "crits_type": 'TAXII',
-        "latest_schema_version": 1,
+        "latest_schema_version": 2,
         #NOTE: minify_defaults fields should match the MongoEngine field names, NOT the database fields
         "minify_defaults": [
             'runtime',
-            'end'
+            'end',
+            'feed'
         ],
         "schema_doc": {
             'runtime': 'The last time we made a TAXII request.',
-            'end': 'End date of this taxii document.'
+            'end': 'End date of this taxii document.',
+            'feed': 'Feed of this taxii document.'
         },
     }
 
@@ -34,5 +36,6 @@ class Taxii(CritsDocument, Document):
         pass
 
     @classmethod
-    def get_last(cls):
-        return cls.objects.order_by('-end').first()
+    def get_last(cls,feed):
+        #returns the last time for the particular feed
+        return cls.objects(unsupported_attrs={'feed':feed}).order_by('-end').first()

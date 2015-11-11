@@ -7,6 +7,8 @@ from crits.core.handlers import does_source_exist
 from crits.services.core import Service, ServiceConfigError
 
 from . import forms
+from . import auto
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -16,11 +18,14 @@ class TAXIIClient(Service):
     """
 
     name = "taxii_service"
-    version = "2.0.1"
+    version = "2.0.2"
     supported_types = []
     required_fields = ['_id']
     description = "Send TAXII messages to a TAXII server."
     template = "taxii_service_results.html"
+
+    time.sleep(30)
+    auto.start_polling()
 
     @staticmethod
     def parse_config(config):
@@ -52,10 +57,10 @@ class TAXIIClient(Service):
             errors.append("You must specify at least one certfile.")
         for crtfile in config['certfiles']:
             try:
-                (source, feed, filepath) = crtfile.split(',')
+                (source, feed, filepath, sync) = crtfile.split(',')
             except ValueError as e:
-                errors.append("You must specify a source, feed name, and "
-                              "certificate path for each source. (%s)" % str(e))
+                errors.append("You must specify a source, feed name, "
+                              "certificate path and polling for each source. (%s)" % str(e))
                 break
             source.strip()
             feed.strip()

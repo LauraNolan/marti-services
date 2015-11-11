@@ -81,7 +81,7 @@ def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
 
     # Last document's end time is our start time.
     if not start:
-        last = taxii.Taxii.get_last()
+        last = taxii.Taxii.get_last(feed)
         if last:
             start = pytz.utc.localize(last.end)
 
@@ -124,7 +124,8 @@ def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
     crits_taxii = taxii.Taxii()
     crits_taxii.runtime = runtime
     crits_taxii.end = end
-    print "about to poll the YETI server"
+    crits_taxii.feed = feed
+    #print "about to poll the YETI server"
     # Poll using 1.1 then 1.0 if that fails.
     poll_msg = tm11.PollRequest(message_id=tm11.generate_message_id(),
                                 collection_name=feed,
@@ -156,7 +157,7 @@ def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
                                         taxii_msg.message)
             return ret
 
-    #print taxii_msg.to_xml(pretty_print=True)
+   # print taxii_msg.to_xml(pretty_print=True)
     valid = tm11.validate_xml(taxii_msg.to_xml())
     if valid != True:
         ret['reason'] = "Invalid XML: %s" % valid
@@ -174,7 +175,7 @@ def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
 
     mid = taxii_msg.message_id
     for content_block in taxii_msg.content_blocks:
-        print "got a message" 
+        print "got a message from %s feed" % feed
         data = parse_content_block(content_block, keyfile, certfile)
         if not data:
             ret['failures'].append(('No data found in content block', 'Data'))
@@ -191,13 +192,11 @@ def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
             #ret['failures'].append(k)
     #ret['successes'] -= 1 #temp fix
 
-
     crits_taxii.save()
     return ret
 
 def parse_content_block(content_block, privkey=None, pubkey=None):
-    print content_block.content_binding
-    print t.CB_STIX_XML_111
+
     if content_block.content_binding == 'application/x-pks7-mime':
         if not privkey and not pubkey:
             return None
@@ -216,7 +215,6 @@ def parse_content_block(content_block, privkey=None, pubkey=None):
         return parse_content_block(tm.ContentBlock.from_xml(new_block), privkey, pubkey)
     #elif content_block.content_binding == t.CB_STIX_XML_111:
     else:
-        print "inside stix 1.1"
         f = BytesIO(content_block.content)
         data = f.read()
         f.close()
@@ -659,7 +657,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
     # collect the list of destination data feeds for the message
     destination_feeds = []
     for crtfile in certfiles:
-        (source, feed, filepath) = crtfile.split(',')
+        (source, feed, filepath, sync) = crtfile.split(',')
         src = source.strip()
         if src in rcpts:
             destination_feeds.append((src, feed.strip(), filepath.strip()))
@@ -789,7 +787,7 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
     :type url: str
     :returns: tuple (response, taxii_message) or (exception message)
     """
-    print "Inside gen_send....."
+
     # Wrap encrypted block in content block
     content_block = tm_.ContentBlock(
                 content_binding = t.CB_STIX_XML_111,
@@ -799,6 +797,7 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
         #content_binding = "application/x-pks7-mime",
         #content = encrypted_block
     #)
+
     # Create inbox message
     if dcn:
         inbox_message = tm_.InboxMessage(
@@ -818,12 +817,7 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
 
     # send inbox message via TAXII service
     try:
-        print "trying to send to taxii"
-        #print hostname
-        #print url
-        #print t_xml
-        #print "printing inbox message"
-        #print inbox_message.to_xml(pretty_print=True)
+#        print "trying to send to taxii"
        # response = client.callTaxiiService2(
         #    hostname,
          #   url,
@@ -835,10 +829,10 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
         #taxii_message = t.get_message_from_http_response(response,
                               #                           inbox_message.message_id)
         
-        response = client.call_taxii_service2('192.168.95.131', '/services/inbox/', VID_TAXII_XML_11, inbox_message.to_xml(pretty_print=True))
+        response = client.call_taxii_service2(hostname, '/services/inbox/', VID_TAXII_XML_11, inbox_message.to_xml(pretty_print=True))
         taxii_message = t.get_message_from_http_response(response, inbox_message.message_id)
         print "Message sent..."
-        print taxii_message.to_xml(pretty_print=True)
+#        print taxii_message.to_xml(pretty_print=True)
         #print response
 
         return (response, taxii_message)
@@ -962,11 +956,8 @@ def import_standards_doc(data, analyst, method, ref=None, make_event=False,
 
     try:
         parser = STIXParser(data, analyst, method)
-        print "past stixparser"
         parser.parse_stix(reference=ref, make_event=make_event, source=source)
-        print "past parse_stix"
         parser.relate_objects()
-        print "past parse relates objects"
     except STIXParserException, e:
         logger.exception(e)
         ret['reason'] = str(e.message)
