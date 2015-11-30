@@ -626,6 +626,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
     :param relation_choices The list of items related to OBJ that have been chosen for sharing
     :param confirmed True if user has accepted & approved releasability updates
     """
+
     ret = {
             'success': False, # tells client whether any message was sent successfully
             'rcpts': [], # list of sources the message was sent
@@ -657,7 +658,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
     # collect the list of destination data feeds for the message
     destination_feeds = []
     for crtfile in certfiles:
-        (source, feed, filepath, sync) = crtfile.split(',')
+        (source, feed, filepath, polling, inbox) = crtfile.split(',')
         src = source.strip()
         if src in rcpts:
             destination_feeds.append((src, feed.strip(), filepath.strip()))
@@ -739,7 +740,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
 
         # Try TAXII 1.0 since 1.1 seems to have failed.
         if try_10:
-            result = gen_send(tm, client, encrypted_block, hostname,
+            result = gen_send(tm, client, stix_doc, hostname,
                             t.VID_TAXII_XML_10,
                             eh = {'TargetFeed': feed[1]},
                             url = "/services/inbox/")

@@ -25,7 +25,8 @@ class TAXIIClient(Service):
     template = "taxii_service_results.html"
 
     time.sleep(30)
-    auto.start_polling()
+    #auto.start_polling()
+    auto.start_inbox()
 
     @staticmethod
     def parse_config(config):
@@ -57,10 +58,10 @@ class TAXIIClient(Service):
             errors.append("You must specify at least one certfile.")
         for crtfile in config['certfiles']:
             try:
-                (source, feed, filepath, sync) = crtfile.split(',')
+                (source, feed, filepath, polling, inbox) = crtfile.split(',')
             except ValueError as e:
                 errors.append("You must specify a source, feed name, "
-                              "certificate path and polling for each source. (%s)" % str(e))
+                              "certificate path, auto/manuel polling, and auto/manuel inbox for each source. (%s)" % str(e))
                 break
             source.strip()
             feed.strip()

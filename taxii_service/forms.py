@@ -134,15 +134,20 @@ class TAXIIServiceConfigForm(forms.Form):
                                        initial=False,
                                        help_text="Auto poll Taxii feeds.")
 
+    auto_inbox = forms.BooleanField(required=False,
+                                       label="Auto Inbox",
+                                       initial=False,
+                                       help_text="Auto send Taxii feeds.")
+
     certfiles = forms.CharField(required=True,
                                 label="Configuration",
                                 initial='',
                                 widget=forms.Textarea(attrs={'cols': 80,
                                                             'rows': 10}),
                                 help_text="Comma delimited list of CRITs"
-                                          " source name, TAXII feed name, and"
+                                          " source name, TAXII feed name,"
                                           " certificate file on disk for that"
-                                          " source.")
+                                          " source, polling, inbox.")
 
     def __init__(self, *args, **kwargs):
         super(TAXIIServiceConfigForm, self).__init__(*args, **kwargs)
