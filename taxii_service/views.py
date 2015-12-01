@@ -27,6 +27,12 @@ def taxii_agent(request):
 
 @user_passes_test(user_can_view_data)
 def get_taxii_config_form(request, crits_type, crits_id):
+
+    #DUMMY so that the user can't manually send taxii message
+    return render_to_response('error.html',
+                                  {'error': "Must be AJAX."},
+                                  RequestContext(request))
+
     if request.method == "GET":
         obj = class_from_id(crits_type, crits_id)
         if not obj:

@@ -112,12 +112,12 @@ class TaxiiAgentInbox(threading.Thread):
                 TLO.append([{'items': mongo_find('certificates', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Certificate'}])
                 TLO.append([{'items': mongo_find('domains', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Domain'}])
                 TLO.append([{'items': mongo_find('email', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Email'}])
-                TLO.append([{'items': mongo_find('indicators', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Indicator'}])
-                TLO.append([{'items': mongo_find('ips', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'IP'}])
+                #TLO.append([{'items': mongo_find('indicators', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Indicator'}])
+                #TLO.append([{'items': mongo_find('ips', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'IP'}])
                 TLO.append([{'items': mongo_find('pcaps', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'PCAP'}])
                 TLO.append([{'items': mongo_find('raw_data', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'RawData'}])
                 TLO.append([{'items': mongo_find('sample', {'modified': {'$gt': start}}, sort=[('modified',-1)])},{'collection' : 'Sample'}])
-                TLO.append([{'items': mongo_find('events', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Event'}])
+                #TLO.append([{'items': mongo_find('events', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Event'}])
 
                 for samples in TLO:
                     for doc in samples[0]['items']:
