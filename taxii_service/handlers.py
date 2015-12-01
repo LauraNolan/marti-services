@@ -485,6 +485,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
     # go in which part of the STIX document.
     ind_list = ['Indicator']
     obs_list = ['Certificate',
+                'Comment',
                 'Domain',
                 'Email',
                 'IP',

@@ -34,7 +34,7 @@ class TaxiiAgentPolling(threading.Thread):
                    if polling in 'auto':
                        handlers.execute_taxii_agent(analyst="taxii", method="TAXII Agent Web",feed=src)
 
-            time.sleep(60)
+            time.sleep(10)
 
 polling_thread = TaxiiAgentPolling()
 
@@ -108,27 +108,38 @@ class TaxiiAgentInbox(threading.Thread):
                 crits_taxii.end = end
                 crits_taxii.feed = feed
 
-                samples = mongo_find('sample', {'modified': {'$gt': start}}, sort=[('modified',-1)])
-                for doc in samples:
-                    release_list = []
+                TLO = []
+                TLO.append([{'items': mongo_find('certificates', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Certificate'}])
+                TLO.append([{'items': mongo_find('domains', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Domain'}])
+                TLO.append([{'items': mongo_find('email', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Email'}])
+                TLO.append([{'items': mongo_find('indicators', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Indicator'}])
+                TLO.append([{'items': mongo_find('ips', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'IP'}])
+                TLO.append([{'items': mongo_find('pcaps', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'PCAP'}])
+                TLO.append([{'items': mongo_find('raw_data', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'RawData'}])
+                TLO.append([{'items': mongo_find('sample', {'modified': {'$gt': start}}, sort=[('modified',-1)])},{'collection' : 'Sample'}])
+                TLO.append([{'items': mongo_find('events', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Event'}])
 
-                    if 'releasability' in doc:
-                        for release in doc['releasability']:
-                            if release['name'] in feeds:
-                                if release['instances'] != []:
-                                    if sorted(release['instances'], reverse=True)[0]['date'] <= (doc['modified'] - timedelta(seconds=1)):
+                for samples in TLO:
+                    for doc in samples[0]['items']:
+                        release_list = []
+
+                        if 'releasability' in doc:
+                            for release in doc['releasability']:
+                                if release['name'] in feeds:
+                                    if release['instances'] != []:
+                                        if sorted(release['instances'], reverse=True)[0]['date'] <= (doc['modified'] - timedelta(seconds=1)):
+                                            release_list.append(release['name'])
+                                    else:
                                         release_list.append(release['name'])
-                                else:
-                                    release_list.append(release['name'])
 
-                    if release_list != []:
-                        obj = class_from_id('Sample', doc['_id'])
-                        data = handlers.run_taxii_service("taxii", obj, release_list, preview=False,confirmed=True)
-                        print data
+                        if release_list != []:
+                            obj = class_from_id(samples[1]['collection'], doc['_id'])
+                            data = handlers.run_taxii_service("taxii", obj, release_list, preview=False,confirmed=True)
+                            print doc['_id'], " : ", data
 
                 crits_taxii.save()
 
-            time.sleep(60)
+            time.sleep(10)
 
 inbox_thread = TaxiiAgentInbox()
 

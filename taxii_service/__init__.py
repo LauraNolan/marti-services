@@ -24,8 +24,8 @@ class TAXIIClient(Service):
     description = "Send TAXII messages to a TAXII server."
     template = "taxii_service_results.html"
 
-    time.sleep(30)
-    #auto.start_polling()
+    time.sleep(5)
+    auto.start_polling()
     auto.start_inbox()
 
     @staticmethod
