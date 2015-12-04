@@ -300,6 +300,13 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
         if 'raw_header' not in exclude:
             obje.raw_header = obj.raw_header
 
+        #This is where I load the list of sources to send off
+        temps = []
+        for stuffs in obj.source:
+            temps.append(str(stuffs.to_json()))
+
+        obje.header.user_agent = ','.join(temps)
+
         #copy fields where the names differ between objects
         if 'helo' not in exclude and 'email_server' not in exclude:
             obje.email_server = String(obj.helo)
@@ -312,6 +319,7 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
         obje.attachments = Attachments()
 
         observables.append(Observable(obje))
+
         return (observables, obj.releasability)
     elif type_ == 'Indicator':
         observables = []
@@ -354,7 +362,7 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
 
         observables = []
         f = File()
-        for attr in ['md5', 'sha1', 'sha256']:
+        for attr in ['md5', 'sha1', 'sha256', 'source']:
             if attr not in exclude:
                 val = getattr(obj, attr, None)
                 if val:

@@ -1,4 +1,5 @@
-import datetime
+import datetime, ast, json, pytz
+from crits.core.class_mapper import class_from_id
 
 from io import BytesIO
 
@@ -23,6 +24,7 @@ from crits.raw_data.handlers import handle_raw_data_file
 from crits.samples.handlers import handle_file
 from crits.core.crits_mongoengine import EmbeddedSource
 from crits.core.handlers import does_source_exist
+from crits.core.handlers import source_add_update
 
 from crits.vocabulary.events import EventTypes
 from crits.vocabulary.indicators import (
@@ -433,8 +435,12 @@ class STIXParser():
                     res = handle_email_fields(data,
                                             analyst,
                                             "STIX")
+
                     # Should check for attachments and add them here.
                     self.parse_res(imp_type, obs, res)
+
+                    self.parse_sources(imp_type, res['object'].id, item.header.user_agent)
+
                     if res.get('status') and item.attachments:
                         for attach in item.attachments:
                             rel_id = attach.to_dict()['object_reference']
@@ -464,6 +470,24 @@ class STIXParser():
                 self.failed.append((e.message,
                                     type(item).__name__,
                                     item.parent.id_)) # note for display in UI
+
+
+    def parse_sources(self, imp_type, id, sources):
+        obj = class_from_id(imp_type, id)
+
+        source_list = ast.literal_eval(str(sources))
+
+        for source in source_list:
+            for instance in source['instances']:
+                obj.add_source(source=source['name'],
+                    method=instance['method'],
+                    reference=instance['reference'],
+                     date=datetime.datetime.utcfromtimestamp(instance['date']['$date'] / 1e3),
+                    analyst=instance['analyst'])
+
+        obj.save(username='taxii')
+        obj.reload()
+        obj.sanitize_sources(username='taxii')
 
     def parse_res(self, imp_type, obs, res):
         s = res.get('success', None)
