@@ -21,12 +21,13 @@ from django.conf import settings
 
 from cybox.common import String, DateTime, Hash, UnsignedLong
 from cybox.common.object_properties import CustomProperties, Property
-from cybox.core import Observable
+from cybox.core import Observable, ObservableComposition
 from cybox.objects.address_object import Address, EmailAddress
 from cybox.objects.artifact_object import Artifact, Base64Encoding, ZlibCompression
 from cybox.objects.domain_name_object import DomainName
 from cybox.objects.email_message_object import EmailHeader, EmailMessage, Attachments
 from cybox.objects.file_object import File
+from cybox.objects.link_object import Link
 
 from stix.threat_actor import ThreatActor
 
@@ -300,13 +301,6 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
         if 'raw_header' not in exclude:
             obje.raw_header = obj.raw_header
 
-        #This is where I load the list of sources to send off
-        temps = []
-        for stuffs in obj.source:
-            temps.append(str(stuffs.to_json()))
-
-        obje.header.user_agent = ','.join(temps)
-
         #copy fields where the names differ between objects
         if 'helo' not in exclude and 'email_server' not in exclude:
             obje.email_server = String(obj.helo)
@@ -318,7 +312,19 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
 
         obje.attachments = Attachments()
 
-        observables.append(Observable(obje))
+        #observables.append(Observable(obje))
+
+        #This is where I load the list of sources to send off
+        temps = []
+        for stuffs in obj.source:
+            temps.append(str(stuffs.to_json()))
+        testing = Link()
+        testing.url_label = ','.join(temps)
+
+        o_comp = ObservableComposition(operator="OR")
+        o_comp.add(Observable(obje))
+        o_comp.add(Observable(testing))
+        observables.append(Observable(o_comp))
 
         return (observables, obj.releasability)
     elif type_ == 'Indicator':
@@ -390,7 +396,20 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
             #   CybOX-binding friendly object (e.g., calling .to_dict() on
             #   the resulting CybOX object fails on this field.
             f.file_format = obj.filetype
-        observables.append(Observable(f))
+
+        #This is where I load the list of sources to send off
+        temps = []
+        for stuffs in obj.source:
+            temps.append(str(stuffs.to_json()))
+        testing = Link()
+        testing.url_label = ','.join(temps)
+
+        o_comp = ObservableComposition(operator="OR")
+        o_comp.add(Observable(f))
+        o_comp.add(Observable(testing))
+        observables.append(Observable(o_comp))
+
+        #observables.append(Observable(f))
         return (observables, obj.releasability)
     else:
         return (None, None)
