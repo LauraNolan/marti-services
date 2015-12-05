@@ -333,8 +333,6 @@ class STIXParser():
                 try: # try to create CRITs object from observable
                     item = obs_comp.object_.properties
 
-                    print "this is the item type: ", type(item)
-
                     if isinstance(item, Link):
                         self.parse_sources(imp_type, res['object'].id, item.url_label)
 

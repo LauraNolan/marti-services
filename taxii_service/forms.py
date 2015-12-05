@@ -139,6 +139,18 @@ class TAXIIServiceConfigForm(forms.Form):
                                        initial=False,
                                        help_text="Auto send Taxii feeds.")
 
+    polling_time = forms.CharField(required=True,
+                              label="Polling Frequency (Seconds)",
+                              initial='30',
+                              widget=forms.TextInput(),
+                              help_text="How often do you want to poll the TAXII Server")
+
+    inbox_time = forms.CharField(required=True,
+                              label="Inbox Frequency (Seconds)",
+                              initial='30',
+                              widget=forms.TextInput(),
+                              help_text="How often do you want to poll the TAXII Server")
+
     certfiles = forms.CharField(required=True,
                                 label="Configuration",
                                 initial='',

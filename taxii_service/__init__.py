@@ -24,7 +24,7 @@ class TAXIIClient(Service):
     description = "Send TAXII messages to a TAXII server."
     template = "taxii_service_results.html"
 
-    time.sleep(5)
+    time.sleep(15)
     auto.start_polling()
     auto.start_inbox()
 
@@ -56,6 +56,10 @@ class TAXIIClient(Service):
             errors.append("You must specify a TAXII Data Feed.")
         if not certfiles:
             errors.append("You must specify at least one certfile.")
+        if not config.get('polling_time', "").strip().isdigit():
+            errors.append("Polling time must be an integer.")
+        if not config.get('inbox_time', "").strip().isdigit():
+            errors.append("Inbox time must be an integer.")
         for crtfile in config['certfiles']:
             try:
                 (source, feed, filepath, polling, inbox) = crtfile.split(',')

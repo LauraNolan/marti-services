@@ -34,7 +34,7 @@ class TaxiiAgentPolling(threading.Thread):
                    if polling in 'auto':
                        handlers.execute_taxii_agent(analyst="taxii", method="TAXII Agent Web",feed=src)
 
-            time.sleep(10)
+            time.sleep(int(sc['polling_time']))
 
 polling_thread = TaxiiAgentPolling()
 
@@ -74,6 +74,7 @@ class TaxiiAgentInbox(threading.Thread):
             # Get config and grab some stuff we need.
             sc = get_config('taxii_service')
             certfiles = sc['certfiles']
+
             feeds = []
 
             for crtfile in certfiles:
@@ -122,24 +123,33 @@ class TaxiiAgentInbox(threading.Thread):
                 for samples in TLO:
                     for doc in samples[0]['items']:
                         release_list = []
+                        send_me = True
 
-                        if 'releasability' in doc:
-                            for release in doc['releasability']:
-                                if release['name'] in feeds:
-                                    if release['instances'] != []:
-                                        if sorted(release['instances'], reverse=True)[0]['date'] <= (doc['modified'] - timedelta(seconds=1)):
+                        if 'source' in doc:
+                            for source in doc['source']:
+                                if source['instances'] != []:
+                                    if sorted(source['instances'], reverse=True)[0]['analyst'] in 'taxii':
+                                        if sorted(source['instances'], reverse=True)[0]['date'] >= (doc['modified'] - timedelta(seconds=1)):
+                                            send_me = False
+
+                        if send_me:
+                            if 'releasability' in doc:
+                                for release in doc['releasability']:
+                                    if release['name'] in feeds:
+                                        if release['instances'] != []:
+                                            if sorted(release['instances'], reverse=True)[0]['date'] <= (doc['modified'] - timedelta(seconds=1)):
+                                                release_list.append(release['name'])
+                                        else:
                                             release_list.append(release['name'])
-                                    else:
-                                        release_list.append(release['name'])
 
-                        if release_list != []:
-                            obj = class_from_id(samples[1]['collection'], doc['_id'])
-                            data = handlers.run_taxii_service("taxii", obj, release_list, preview=False,confirmed=True)
-                            print doc['_id'], " : ", data
+                            if release_list != []:
+                                obj = class_from_id(samples[1]['collection'], doc['_id'])
+                                data = handlers.run_taxii_service("taxii", obj, release_list, preview=False,confirmed=True)
+                                print doc['_id'], " : ", data
 
                 crits_taxii.save()
 
-            time.sleep(10)
+            time.sleep(int(sc['inbox_time']))
 
 inbox_thread = TaxiiAgentInbox()
 
