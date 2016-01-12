@@ -487,6 +487,24 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
     else:
         return (None, None)
 
+def to_stix_campaign(obj):
+
+    from stix.core import Campaign
+    #Taking the campaign TLO info and making it a campaign STIX object
+
+    #camp.confidence
+    #camp.date
+    #camp.description
+    #camp.name
+    for camp in obj.campaign:
+        myCamp = Campaign()
+        myCamp.short_description = camp.confidence
+        myCamp.timestamp = camp.date
+        myCamp.description = camp.description
+        myCamp.title = camp.name
+
+    return myCamp
+
 def to_stix_indicator(obj):
     """
     Creates a STIX Indicator object from a CybOX object.
@@ -578,20 +596,17 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
 
     from cybox.common import Time, ToolInformationList, ToolInformation
     from stix.common import StructuredText, InformationSource
-    from stix.core import STIXPackage, STIXHeader
+    from stix.core import STIXPackage, STIXHeader, Campaign
     from stix.common.identity import Identity
 
     # These lists are used to determine which CRITs objects
     # go in which part of the STIX document.
     ind_list = ['Indicator']
-    obs_list = ['Certificate',
-                'Comment',
-                'Domain',
+    obs_list = ['Domain',
                 'Email',
                 'IP',
-                'PCAP',
-                'RawData',
-                'Sample']
+                'Sample',
+                'Campaign']
     actor_list = ['Actor']
 
     # Store message
@@ -638,6 +653,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
             stix_msg['stix_indicators'].append(stx)
             refObjs[obj.id] = S_Ind(idref=stx.id_)
         elif obj_type in obs_list: # convert to CybOX observable
+            camp = to_stix_campaign(obj)
             if obj_type == class_from_type('Sample')._meta['crits_type']:
                 stx, releas = to_cybox_observable(obj, bin_fmt=bin_fmt)
             else:
@@ -647,6 +663,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
             ind = S_Ind()
             for ob in stx:
                 ind.add_observable(ob)
+                ind.add_related_campaign(camp)
             ind.title = "CRITs %s Top-Level Object" % obj_type
             ind.description = ("This is simply a CRITs %s top-level "
                                 "object, not actually an Indicator. "
@@ -714,7 +731,10 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
                     indicators=stix_msg['stix_indicators'],
                     threat_actors=stix_msg['stix_actors'],
                     stix_header=header,
+                    campaigns=camp,
                     id_=uuid.uuid4())
+
+    print stix_msg['stix_obj'].to_xml()
 
     return stix_msg
 
