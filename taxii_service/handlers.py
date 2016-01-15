@@ -19,13 +19,13 @@ from libtaxii.constants import *
 
 from django.conf import settings
 
-from cybox.common import String, DateTime, Hash, UnsignedLong
+from cybox.common import String, DateTime, Hash, UnsignedLong, Time
 from cybox.common.object_properties import CustomProperties, Property
 from cybox.core import Observable, ObservableComposition
 from cybox.objects.address_object import Address, EmailAddress
 from cybox.objects.artifact_object import Artifact, Base64Encoding, ZlibCompression
 from cybox.objects.domain_name_object import DomainName
-from cybox.objects.email_message_object import EmailHeader, EmailMessage, Attachments
+from cybox.objects.email_message_object import EmailHeader, EmailMessage, Attachments, EmailRecipients
 from cybox.objects.file_object import File
 from cybox.objects.link_object import Link
 
@@ -325,6 +325,10 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
         if 'raw_header' not in exclude:
             obje.raw_header = obj.raw_header
 
+        #adding rest of email fields
+        obje.header.cc = EmailRecipients(obj.cc)
+        obje.header.to = EmailRecipients(obj.to)
+
         #copy fields where the names differ between objects
         if 'helo' not in exclude and 'email_server' not in exclude:
             obje.email_server = String(obj.helo)
@@ -339,15 +343,15 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
         #observables.append(Observable(obje))
 
         #This is where I load the list of sources to send off
-        temps = []
-        for stuffs in obj.source:
-            temps.append(str(stuffs.to_json()))
-        testing = Link()
-        testing.url_label = ','.join(temps)
+        #temps = []
+        #for stuffs in obj.source:
+        #    temps.append(str(stuffs.to_json()))
+        #testing = Link()
+        #testing.url_label = ','.join(temps)
 
         o_comp = ObservableComposition(operator="OR")
         o_comp.add(Observable(obje))
-        o_comp.add(Observable(testing))
+        #o_comp.add(Observable(testing))
         observables.append(Observable(o_comp))
 
         return (observables, obj.releasability)
@@ -492,18 +496,34 @@ def to_stix_campaign(obj):
     from stix.core import Campaign
     #Taking the campaign TLO info and making it a campaign STIX object
 
-    #camp.confidence
-    #camp.date
-    #camp.description
-    #camp.name
+    campaign_list = []
+
     for camp in obj.campaign:
         myCamp = Campaign()
         myCamp.short_description = camp.confidence
         myCamp.timestamp = camp.date
         myCamp.description = camp.description
         myCamp.title = camp.name
+        campaign_list.append(myCamp)
 
-    return myCamp
+    return campaign_list
+
+def to_stix_information_source(obj):
+
+    from stix.common import InformationSource, Identity
+
+    mySource = InformationSource()
+
+    for item in obj.source:
+        for each in item.instances:
+            itemSource = InformationSource()
+            itemSource.time = Time(each.date)
+            itemSource.identity = Identity(name=item.name)
+            itemSource.add_description(each.reference)
+            itemSource.add_description(each.method)
+            mySource.add_contributing_source(itemSource)
+
+    return mySource
 
 def to_stix_indicator(obj):
     """
@@ -596,7 +616,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
 
     from cybox.common import Time, ToolInformationList, ToolInformation
     from stix.common import StructuredText, InformationSource
-    from stix.core import STIXPackage, STIXHeader, Campaign
+    from stix.core import STIXPackage, STIXHeader
     from stix.common.identity import Identity
 
     # These lists are used to determine which CRITs objects
@@ -663,7 +683,8 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
             ind = S_Ind()
             for ob in stx:
                 ind.add_observable(ob)
-                ind.add_related_campaign(camp)
+                for each in camp:
+                    ind.add_related_campaign(each)
             ind.title = "CRITs %s Top-Level Object" % obj_type
             ind.description = ("This is simply a CRITs %s top-level "
                                 "object, not actually an Indicator. "
@@ -671,6 +692,8 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
                                 " to facilitate documentation of the "
                                 "relationship." % obj_type)
             ind.confidence = 'None'
+            ind.producer = to_stix_information_source(obj)
+            ind.short_descriptions = obj.sectors
             stx = ind
             stix_msg['stix_indicators'].append(stx)
             refObjs[obj.id] = S_Ind(idref=stx.id_)
@@ -734,7 +757,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
                     campaigns=camp,
                     id_=uuid.uuid4())
 
-    print stix_msg['stix_obj'].to_xml()
+    #print stix_msg['stix_obj'].to_xml()
 
     return stix_msg
 
