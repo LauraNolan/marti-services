@@ -525,6 +525,23 @@ def to_stix_information_source(obj):
 
     return mySource
 
+def to_stix_comments(obj):
+    from crits.comments.handlers import get_comments
+    from stix.indicator import Indicator as S_Ind
+
+    comments = get_comments(obj.id,obj._meta['crits_type'])
+    ind_comments = []
+
+    for each in comments:
+        ind = S_Ind()
+        ind.title = "CRITs Comment(s)"
+        ind.description = each.comment
+        ind.producer = to_stix_information_source(each)
+        ind.timestamp = each.edit_date #should be date, but for some reason, it's not getting the correct value
+        ind_comments.append(ind)
+
+    return ind_comments
+
 def to_stix_indicator(obj):
     """
     Creates a STIX Indicator object from a CybOX object.
@@ -674,6 +691,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
             refObjs[obj.id] = S_Ind(idref=stx.id_)
         elif obj_type in obs_list: # convert to CybOX observable
             camp = to_stix_campaign(obj)
+            comm =  to_stix_comments(obj)
             if obj_type == class_from_type('Sample')._meta['crits_type']:
                 stx, releas = to_cybox_observable(obj, bin_fmt=bin_fmt)
             else:
@@ -685,6 +703,8 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
                 ind.add_observable(ob)
                 for each in camp:
                     ind.add_related_campaign(each)
+                for each in comm:
+                    ind.add_related_indicator(each)
             ind.title = "CRITs %s Top-Level Object" % obj_type
             ind.description = ("This is simply a CRITs %s top-level "
                                 "object, not actually an Indicator. "
