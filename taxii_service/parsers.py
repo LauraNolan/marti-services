@@ -44,6 +44,8 @@ from cybox.objects.link_object import Link
 from stix.common import StructuredText
 from stix.core import STIXPackage, STIXHeader
 
+from crits.comments.handlers import comment_add
+
 class STIXParserException(Exception):
     """
     General exception for STIX Parsing.
@@ -179,12 +181,47 @@ class STIXParser():
 
         if self.package.indicators:
             self.parse_indicators(self.package.indicators)
+            self.parse_comments(self.package.indicators)
+            self.parse_sources(self.package.indicators)
 
         if self.package.observables and self.package.observables.observables:
             self.parse_observables(self.package.observables.observables)
 
         if self.package.threat_actors:
             self.parse_threat_actors(self.package.threat_actors)
+
+    def parse_sources(self, indicators):
+
+        for indicator in indicators:
+
+            obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
+
+            for item in indicator.producer.contributing_sources:
+                obj.add_source(source=str(item.identity.name),
+                    method=str(item.descriptions.__getitem__(2)),
+                    reference=str(item.descriptions.__getitem__(1)),
+                    date=item.time.start_time.value,
+                    analyst='taxii')
+
+            obj.save(username='taxii')
+            obj.reload()
+            obj.sanitize_sources(username='taxii')
+
+    def parse_comments(self, indicators):
+
+        data = {}
+
+        for indicator in indicators:
+            #print "My indicator: ", self.imported[indicator.id_][0]
+            #print "Object id: ", self.imported[indicator.id_][1].id
+            for rel in getattr(indicator, 'related_indicators', ()):
+                if rel.item.title in 'CRITs Comment(s)':
+                    #rel.item.timestamp
+                    data['comment'] = str(rel.item.description)
+                    data['url_key'] = str(self.imported[indicator.id_][1].id)
+                    comment_add(data, self.imported[indicator.id_][0],
+                                self.imported[indicator.id_][1].id, None, None, 'taxii')
+
 
     def parse_threat_actors(self, threat_actors):
         """
@@ -264,9 +301,7 @@ class STIXParser():
 
             # store relationships
             for rel in getattr(indicator, 'related_indicators', ()):
-                if rel.item.title in 'CRITs Comment(s)':
-                    print "Found a comment!!"
-                else:
+                if rel.item.title not in 'CRITs Comment(s)':
                     self.relationships.append((indicator.id_,
                                            rel.relationship.value,
                                            rel.item.idref,
@@ -492,8 +527,7 @@ class STIXParser():
                                         type(item).__name__,
                                         item.parent.id_)) # note for display in UI
 
-
-    def parse_sources(self, imp_type, id, sources):
+    def parse_sources_old(self, imp_type, id, sources):
         obj = class_from_id(imp_type, id)
 
         source_list = ast.literal_eval(str(sources))
