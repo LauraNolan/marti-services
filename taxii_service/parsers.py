@@ -45,6 +45,8 @@ from stix.common import StructuredText
 from stix.core import STIXPackage, STIXHeader
 
 from crits.comments.handlers import comment_add
+from crits.campaigns.handlers import campaign_add
+from crits.core.handlers import modify_sector_list
 
 class STIXParserException(Exception):
     """
@@ -183,12 +185,38 @@ class STIXParser():
             self.parse_indicators(self.package.indicators)
             self.parse_comments(self.package.indicators)
             self.parse_sources(self.package.indicators)
+            self.parse_sectors(self.package.indicators)
+            if self.package.campaigns:
+                self.parse_campaigns(self.package.indicators, self.package.campaigns)
 
         if self.package.observables and self.package.observables.observables:
             self.parse_observables(self.package.observables.observables)
 
         if self.package.threat_actors:
             self.parse_threat_actors(self.package.threat_actors)
+
+    def parse_campaigns(self, indicators, campaigns):
+
+        for indicator in indicators:
+            for related_campaign in indicator.related_campaigns:
+                for campaign in campaigns:
+                    if campaign.id_ == related_campaign.item.idref:
+                        campaign_add(str(campaign.title), str(campaign.short_description),
+                                     str(campaign.description), False, 'taxii',
+                                     str(self.imported[indicator.id_][0]),
+                                     str(self.imported[indicator.id_][1].id))
+        return
+
+    def parse_sectors(self, indicators):
+
+        for indicator in indicators:
+            sector_list = []
+            for sector in indicator.short_descriptions:
+                sector_list.append(str(sector))
+            modify_sector_list(str(self.imported[indicator.id_][0]),
+                               str(self.imported[indicator.id_][1].id),
+                               sector_list, 'taxii')
+        return
 
     def parse_sources(self, indicators):
 
@@ -221,7 +249,6 @@ class STIXParser():
                     data['url_key'] = str(self.imported[indicator.id_][1].id)
                     comment_add(data, self.imported[indicator.id_][0],
                                 self.imported[indicator.id_][1].id, None, None, 'taxii')
-
 
     def parse_threat_actors(self, threat_actors):
         """
