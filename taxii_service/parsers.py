@@ -47,6 +47,7 @@ from stix.core import STIXPackage, STIXHeader
 from crits.comments.handlers import comment_add
 from crits.campaigns.handlers import campaign_add
 from crits.core.handlers import modify_sector_list
+from crits.samples.handlers import modify_sample_filenames
 
 class STIXParserException(Exception):
     """
@@ -373,6 +374,17 @@ class STIXParser():
                 except Exception, e: # probably caused by cybox object we don't handle
                     self.failed.append((e.message, type(item).__name__, item.parent.id_)) # note for display in UI
 
+    def parse_filenames(self, extracted_features, imp_id):
+
+        filenames = []
+
+        for extracted_feature in extracted_features.strings:
+            filenames.append(extracted_feature.string_value)
+
+        modify_sample_filenames(imp_id, filenames, 'taxii')
+
+        return
+
     def parse_observables(self, observables):
         """
         Parse list of observables in STIX doc.
@@ -490,6 +502,8 @@ class STIXParser():
                                           md5_digest=md5,
                                           is_return_only_md5=False)
                         self.parse_res(imp_type, obs, res)
+                        #if item.extracted_features:
+                           # self.parse_filenames(item.extracted_features, res['object'].id)
                     elif isinstance(item, EmailMessage):
 
                         imp_type = "Email"
