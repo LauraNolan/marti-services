@@ -385,12 +385,12 @@ class STIXParser():
 
         for obs in observables: # for each STIX observable
 
-            objects_list = obs.to_dict()
-            objects_list2 = objects_list['observable_composition']
+            if obs.observable_composition:
+                object_list = obs.observable_composition.observables
+            else:
+                object_list = [obs]
 
-            for each in objects_list2['observables']:
-                obs_comp = Observable.from_dict(each)
-
+            for obs_comp in object_list:
 
                 if not obs_comp.object_ or not obs_comp.object_.properties:
                     self.failed.append(("No valid object_properties was found!",
@@ -399,9 +399,6 @@ class STIXParser():
                     continue
                 try: # try to create CRITs object from observable
                     item = obs_comp.object_.properties
-
-                    if isinstance(item, Link):
-                        self.parse_sources(imp_type, res['object'].id, item.url_label)
 
                     if isinstance(item, Address):
                         if item.category in ('cidr', 'ipv4-addr', 'ipv4-net',
@@ -514,15 +511,15 @@ class STIXParser():
                             data['from_address'] = str(item.header.from_)
                             data['date'] = item.header.date.value
                             if item.header.to:
-                                data['to'] = [str(r) for r in item.header.to.to_list()]
+                                data['to'] = [str(r) for r in item.header.to]
+                            if item.header.cc:
+                                data['cc'] = [str(r) for r in item.header.cc]
                         res = handle_email_fields(data,
                                                 analyst,
                                                 "STIX")
 
                         # Should check for attachments and add them here.
                         self.parse_res(imp_type, obs, res)
-
-                      #  self.parse_sources(imp_type, res['object'].id, item.header.user_agent)
 
                         if res.get('status') and item.attachments:
                             for attach in item.attachments:
@@ -553,23 +550,6 @@ class STIXParser():
                     self.failed.append((e.message,
                                         type(item).__name__,
                                         item.parent.id_)) # note for display in UI
-
-    def parse_sources_old(self, imp_type, id, sources):
-        obj = class_from_id(imp_type, id)
-
-        source_list = ast.literal_eval(str(sources))
-
-        for source in source_list:
-            for instance in source['instances']:
-                obj.add_source(source=source['name'],
-                    method=instance['method'],
-                    reference=instance['reference'],
-                     date=datetime.datetime.utcfromtimestamp(instance['date']['$date'] / 1e3),
-                    analyst=instance['analyst'])
-
-        obj.save(username='taxii')
-        obj.reload()
-        obj.sanitize_sources(username='taxii')
 
     def parse_res(self, imp_type, obs, res):
         s = res.get('success', None)

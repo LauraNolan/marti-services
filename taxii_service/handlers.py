@@ -258,35 +258,13 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
             a.packaging.append(Base64Encoding())
             obje.add_related(a, "Child_Of") # relate artifact to file
 
-        #This is where I load the list of sources to send off
-        temps = []
-        for stuffs in obj.source:
-            temps.append(str(stuffs.to_json()))
-        testing = Link()
-        testing.url_label = ','.join(temps)
-
-        o_comp = ObservableComposition(operator="OR")
-        o_comp.add(obs)
-        o_comp.add(Observable(testing))
-
-        return ([Observable(o_comp)], obj.releasability)
+        return ([obs], obj.releasability)
     elif type_ == 'Domain':
         obje = DomainName()
         obje.value = obj.domain
         obje.type_ = obj.record_type
 
-        #This is where I load the list of sources to send off
-        temps = []
-        for stuffs in obj.source:
-            temps.append(str(stuffs.to_json()))
-        testing = Link()
-        testing.url_label = ','.join(temps)
-
-        o_comp = ObservableComposition(operator="OR")
-        o_comp.add(Observable(obje))
-        o_comp.add(Observable(testing))
-
-        return ([Observable(o_comp)], obj.releasability)
+        return ([Observable(obje)], obj.releasability)
     elif type_ == 'Email':
         if exclude == None:
             exclude = []
@@ -340,37 +318,13 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
 
         obje.attachments = Attachments()
 
-        #observables.append(Observable(obje))
-
-        #This is where I load the list of sources to send off
-        #temps = []
-        #for stuffs in obj.source:
-        #    temps.append(str(stuffs.to_json()))
-        #testing = Link()
-        #testing.url_label = ','.join(temps)
-
-        o_comp = ObservableComposition(operator="OR")
-        o_comp.add(Observable(obje))
-        #o_comp.add(Observable(testing))
-        observables.append(Observable(o_comp))
+        observables.append(Observable(obje))
 
         return (observables, obj.releasability)
     elif type_ == 'Indicator':
         observables = []
         obje = make_cybox_object(obj.ind_type, obj.value)
-        #observables.append(Observable(obje))
-
-        #This is where I load the list of sources to send off
-        temps = []
-        for stuffs in obj.source:
-            temps.append(str(stuffs.to_json()))
-        testing = Link()
-        testing.url_label = ','.join(temps)
-
-        o_comp = ObservableComposition(operator="OR")
-        o_comp.add(Observable(obje))
-        o_comp.add(Observable(testing))
-        observables.append(Observable(o_comp))
+        observables.append(Observable(obje))
 
         return (observables, obj.releasability)
     elif type_ == 'IP':
@@ -385,18 +339,7 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
         elif obj.ip_type == IPTypes.IPv6_SUBNET:
             obje.category = "ipv6-subnet"
 
-        #This is where I load the list of sources to send off
-        temps = []
-        for stuffs in obj.source:
-            temps.append(str(stuffs.to_json()))
-        testing = Link()
-        testing.url_label = ','.join(temps)
-
-        o_comp = ObservableComposition(operator="OR")
-        o_comp.add(Observable(obje))
-        o_comp.add(Observable(testing))
-
-        return ([Observable(o_comp)], obj.releasability)
+        return ([Observable(obje)], obj.releasability)
     elif type_ == 'PCAP':
         obje = File()
         obje.md5 = obj.md5
@@ -409,36 +352,14 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
         art.packaging.append(Base64Encoding())
         obje.add_related(art, "Child_Of") # relate artifact to file
 
-        #This is where I load the list of sources to send off
-        temps = []
-        for stuffs in obj.source:
-            temps.append(str(stuffs.to_json()))
-        testing = Link()
-        testing.url_label = ','.join(temps)
-
-        o_comp = ObservableComposition(operator="OR")
-        o_comp.add(obs)
-        o_comp.add(Observable(testing))
-
-        return ([Observable(o_comp)], obj.releasability)
+        return ([obs], obj.releasability)
     elif type_ == 'RawData':
         obje = Artifact(obj.data.encode('utf-8'), Artifact.TYPE_FILE)
         obje.packaging.append(Base64Encoding())
         obs = Observable(obje)
         obs.description = obj.description
 
-        #This is where I load the list of sources to send off
-        temps = []
-        for stuffs in obj.source:
-            temps.append(str(stuffs.to_json()))
-        testing = Link()
-        testing.url_label = ','.join(temps)
-
-        o_comp = ObservableComposition(operator="OR")
-        o_comp.add(obs)
-        o_comp.add(Observable(testing))
-
-        return ([Observable(o_comp)], obj.releasability)
+        return ([obs], obj.releasability)
     elif type_ == 'Sample':
         if exclude == None:
             exclude = []
@@ -474,19 +395,7 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
             #   the resulting CybOX object fails on this field.
             f.file_format = obj.filetype
 
-        #This is where I load the list of sources to send off
-        temps = []
-        for stuffs in obj.source:
-            temps.append(str(stuffs.to_json()))
-        testing = Link()
-        testing.url_label = ','.join(temps)
-
-        o_comp = ObservableComposition(operator="OR")
-        o_comp.add(Observable(f))
-        o_comp.add(Observable(testing))
-        observables.append(Observable(o_comp))
-
-        #observables.append(Observable(f))
+        observables.append(Observable(f))
         return (observables, obj.releasability)
     else:
         return (None, None)
