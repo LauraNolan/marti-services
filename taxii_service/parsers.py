@@ -379,7 +379,7 @@ class STIXParser():
         filenames = []
 
         for extracted_feature in extracted_features.strings:
-            filenames.append(extracted_feature.string_value)
+            filenames.append(str(extracted_feature.string_value))
 
         modify_sample_filenames(imp_id, filenames, 'taxii')
 
@@ -502,8 +502,8 @@ class STIXParser():
                                           md5_digest=md5,
                                           is_return_only_md5=False)
                         self.parse_res(imp_type, obs, res)
-                        #if item.extracted_features:
-                           # self.parse_filenames(item.extracted_features, res['object'].id)
+                        if item.extracted_features:
+                            self.parse_filenames(item.extracted_features, res['object'].id)
                     elif isinstance(item, EmailMessage):
 
                         imp_type = "Email"
