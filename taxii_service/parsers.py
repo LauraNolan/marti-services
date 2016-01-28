@@ -415,7 +415,7 @@ class STIXParser():
                     if isinstance(item, Address):
                         if item.category in ('cidr', 'ipv4-addr', 'ipv4-net',
                                              'ipv4-netmask', 'ipv6-addr',
-                                             'ipv6-net', 'ipv6-netmask'):
+                                             'ipv6-net', 'ipv6-netmask', 'ipv6-subnet'):
                             imp_type = "IP"
                             for value in item.address_value.values:
                                 ip = str(value).strip()
@@ -424,8 +424,7 @@ class STIXParser():
                                     res = ip_add_update(ip,
                                                         iptype,
                                                         [self.source],
-                                                        analyst=analyst,
-                                                        is_add_indicator=True)
+                                                        analyst=analyst)
                                     self.parse_res(imp_type, obs, res)
                     if isinstance(item, DomainName):
                         imp_type = "Domain"
