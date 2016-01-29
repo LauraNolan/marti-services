@@ -31,6 +31,7 @@ from cybox.objects.email_message_object import EmailHeader, EmailMessage, Attach
 from cybox.objects.file_object import File
 
 from stix.threat_actor import ThreatActor
+from stix.core import Campaign
 
 from . import taxii
 from . import formats
@@ -403,25 +404,30 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
 
         observables.append(Observable(f))
         return (observables, obj.releasability)
-    elif type_ == 'Campaign':
-        print 'You want to send the campaign? HA!'
     else:
         return (None, None)
 
-def to_stix_campaign(obj):
+def to_stix_campaign(obj, ref=True):
 
     from stix.core import Campaign
     #Taking the campaign TLO info and making it a campaign STIX object
 
     campaign_list = []
 
-    for camp in obj.campaign:
+    if not ref:
         myCamp = Campaign()
-        myCamp.short_description = camp.confidence
-        myCamp.timestamp = camp.date
-        myCamp.description = camp.description
-        myCamp.title = camp.name
+        myCamp.title = 'MyTest' #obj.name
+        myCamp.description = obj.description
         campaign_list.append(myCamp)
+
+    else:
+        for camp in obj.campaign:
+            myCamp = Campaign()
+            myCamp.short_description = camp.confidence
+            myCamp.timestamp = camp.date
+            myCamp.description = camp.description
+            myCamp.title = camp.name
+            campaign_list.append(myCamp)
 
     return campaign_list
 
@@ -559,8 +565,8 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
     obs_list = ['Domain',
                 'Email',
                 'IP',
-                'Sample',
-                'Campaign']
+                'Sample']
+    camp_list = ['Campaign']
     actor_list = ['Actor']
 
     # Store message
@@ -596,6 +602,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
 
     relationships = {}
     stix = []
+    stx = False
     from stix.indicator import Indicator as S_Ind
     for obj in items_to_convert:
         obj_type = obj._meta['crits_type']
@@ -606,6 +613,8 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
             stx, releas = to_stix_indicator(obj)
             stix_msg['stix_indicators'].append(stx)
             refObjs[obj.id] = S_Ind(idref=stx.id_)
+        elif obj_type in camp_list:
+            camp = to_stix_campaign(obj, False)
         elif obj_type in obs_list: # convert to CybOX observable
             camp = to_stix_campaign(obj)
             comm =  to_stix_comments(obj)
@@ -647,7 +656,8 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
                                                             rel.rel_type)
 
         stix_msg['final_objects'].append(obj)
-        stix.append(stx)
+        if stx:
+            stix.append(stx)
 
     # set relationships on STIX objects
     for stix_obj in stix:

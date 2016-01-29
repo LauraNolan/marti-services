@@ -45,7 +45,7 @@ from stix.common import StructuredText
 from stix.core import STIXPackage, STIXHeader
 
 from crits.comments.handlers import comment_add
-from crits.campaigns.handlers import campaign_add
+from crits.campaigns.handlers import campaign_add, add_campaign
 from crits.core.handlers import modify_sector_list
 from crits.samples.handlers import modify_sample_filenames
 
@@ -188,7 +188,9 @@ class STIXParser():
             self.parse_sources(self.package.indicators)
             self.parse_sectors(self.package.indicators)
             if self.package.campaigns:
-                self.parse_campaigns(self.package.indicators, self.package.campaigns)
+                self.parse_related_campaigns(self.package.indicators, self.package.campaigns)
+        elif self.package.campaigns:
+            self.parse_campaigns(self.package.campaigns)
 
         if self.package.observables and self.package.observables.observables:
             self.parse_observables(self.package.observables.observables)
@@ -196,7 +198,16 @@ class STIXParser():
         if self.package.threat_actors:
             self.parse_threat_actors(self.package.threat_actors)
 
-    def parse_campaigns(self, indicators, campaigns):
+    def parse_campaigns(self, campaigns):
+
+        for campaign in campaigns:
+            print campaign.to_xml()
+            res = add_campaign(str(campaign.title), str(campaign.description),
+                         None, 'taxii')
+            print res
+        return
+
+    def parse_related_campaigns(self, indicators, campaigns):
 
         for indicator in indicators:
             for related_campaign in indicator.related_campaigns:
