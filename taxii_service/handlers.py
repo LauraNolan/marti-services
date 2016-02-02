@@ -416,7 +416,7 @@ def to_stix_campaign(obj, ref=True):
 
     if not ref:
         myCamp = Campaign()
-        myCamp.title = 'MyTest' #obj.name
+        myCamp.title = obj.name
         myCamp.description = obj.description
         campaign_list.append(myCamp)
 
@@ -452,7 +452,7 @@ def to_stix_comments(obj):
     from crits.comments.handlers import get_comments
     from stix.indicator import Indicator as S_Ind
 
-    comments = get_comments(obj.id,obj._meta['crits_type'])
+    comments = get_comments(obj.id, obj._meta['crits_type'], False)
     ind_comments = []
 
     for each in comments:

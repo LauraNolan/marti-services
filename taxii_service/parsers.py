@@ -249,18 +249,25 @@ class STIXParser():
 
     def parse_comments(self, indicators):
 
+        from crits.comments.handlers import get_comments
+
         data = {}
 
         for indicator in indicators:
-            #print "My indicator: ", self.imported[indicator.id_][0]
-            #print "Object id: ", self.imported[indicator.id_][1].id
+            obj_id = self.imported[indicator.id_][1].id
+            obj_type = self.imported[indicator.id_][0]
+            comments = get_comments(obj_id, obj_type, False)
             for rel in getattr(indicator, 'related_indicators', ()):
                 if rel.item.title in 'CRITs Comment(s)':
-                    #rel.item.timestamp
                     data['comment'] = str(rel.item.description)
-                    data['url_key'] = str(self.imported[indicator.id_][1].id)
-                    comment_add(data, self.imported[indicator.id_][0],
-                                self.imported[indicator.id_][1].id, None, None, 'taxii')
+                    data['url_key'] = str(obj_id)
+                    send = True
+                    for comment in comments:
+                        if comment.edit_date == rel.item.timestamp:
+                            if comment.comment == data['comment']:
+                                send = False
+                    if send:
+                        comment_add(data, obj_type, obj_id, None, None, 'taxii', rel.item.timestamp)
 
     def parse_threat_actors(self, threat_actors):
         """
