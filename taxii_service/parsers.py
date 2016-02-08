@@ -261,6 +261,7 @@ class STIXParser():
                 if rel.item.title in 'CRITs Comment(s)':
                     data['comment'] = str(rel.item.description)
                     data['url_key'] = str(obj_id)
+                    data['private'] = bool(False)
                     send = True
                     for comment in comments:
                         if comment.edit_date == rel.item.timestamp:

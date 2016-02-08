@@ -456,12 +456,13 @@ def to_stix_comments(obj):
     ind_comments = []
 
     for each in comments:
-        ind = S_Ind()
-        ind.title = "CRITs Comment(s)"
-        ind.description = each.comment
-        ind.producer = to_stix_information_source(each)
-        ind.timestamp = each.edit_date #should be date, but for some reason, it's not getting the correct value
-        ind_comments.append(ind)
+        if not each.private:
+            ind = S_Ind()
+            ind.title = "CRITs Comment(s)"
+            ind.description = each.comment
+            ind.producer = to_stix_information_source(each)
+            ind.timestamp = each.edit_date #should be date, but for some reason, it's not getting the correct value
+            ind_comments.append(ind)
 
     return ind_comments
 
