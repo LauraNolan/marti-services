@@ -187,6 +187,7 @@ class STIXParser():
             self.parse_comments(self.package.indicators)
             self.parse_sources(self.package.indicators)
             self.parse_sectors(self.package.indicators)
+            self.parse_sightings(self.package.indicators)
             if self.package.campaigns:
                 self.parse_related_campaigns(self.package.indicators, self.package.campaigns)
         elif self.package.campaigns:
@@ -228,6 +229,17 @@ class STIXParser():
             modify_sector_list(str(self.imported[indicator.id_][0]),
                                str(self.imported[indicator.id_][1].id),
                                sector_list, 'taxii')
+        return
+
+    def parse_sightings(self, indicators):
+
+        for indicator in indicators:
+
+            obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
+
+            for item in indicator.sightings.sighting.contributing_sources:
+                print item.to_xml()
+
         return
 
     def parse_sources(self, indicators):

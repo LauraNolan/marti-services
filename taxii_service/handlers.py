@@ -448,6 +448,38 @@ def to_stix_information_source(obj):
 
     return mySource
 
+def to_stix_kill_chains(obj):
+
+    import stix.common.kill_chains.lmco as lmco
+    myKill = []
+
+    for each in lmco.LMCO_KILL_CHAIN_PHASES:
+        if each.name in obj.kill_chain:
+            myKill.append(each)
+
+    return myKill
+
+def to_stix_sightings(obj):
+    from stix.indicator.sightings import Sighting
+    from stix.common import InformationSource, Identity
+
+    mySighting = Sighting()
+    mySighting.source = InformationSource()
+
+    if obj.sightings.sighting:
+        itemSighting = InformationSource()
+        itemSighting.time = Time(obj.sightings.date)
+        itemSighting.identity = Identity(name=settings.COMPANY_NAME)
+        mySighting.source.add_contributing_source(itemSighting)
+
+    for each in obj.sightings.instances:
+        itemSighting = InformationSource()
+        itemSighting.time = Time(each.date)
+        itemSighting.identity = Identity(name=each.name)
+        mySighting.source.add_contributing_source(itemSighting)
+
+    return mySighting
+
 def to_stix_comments(obj):
     from crits.comments.handlers import get_comments
     from stix.indicator import Indicator as S_Ind
@@ -559,6 +591,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
     from stix.common import StructuredText, InformationSource
     from stix.core import STIXPackage, STIXHeader
     from stix.common.identity import Identity
+    import stix.common.kill_chains.lmco as lmco
 
     # These lists are used to determine which CRITs objects
     # go in which part of the STIX document.
@@ -619,6 +652,8 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
         elif obj_type in obs_list: # convert to CybOX observable
             camp = to_stix_campaign(obj)
             comm =  to_stix_comments(obj)
+            sight = to_stix_sightings(obj)
+            kill = to_stix_kill_chains(obj)
             if obj_type == class_from_type('Sample')._meta['crits_type']:
                 stx, releas = to_cybox_observable(obj, bin_fmt=bin_fmt)
             else:
@@ -628,10 +663,13 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
             ind = S_Ind()
             for ob in stx:
                 ind.add_observable(ob)
+                ind.sightings.append(sight)
                 for each in camp:
                     ind.add_related_campaign(each)
                 for each in comm:
                     ind.add_related_indicator(each)
+                for each in kill:
+                    ind.add_kill_chain_phase(each)
             ind.title = "CRITs %s Top-Level Object" % obj_type
             ind.description = ("This is simply a CRITs %s top-level "
                                 "object, not actually an Indicator. "
