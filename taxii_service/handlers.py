@@ -454,7 +454,7 @@ def to_stix_kill_chains(obj):
     myKill = []
 
     for each in lmco.LMCO_KILL_CHAIN_PHASES:
-        if each.name in obj.kill_chain:
+        if str(each.ordinality) + ". " + each.name in obj.kill_chain:
             myKill.append(each)
 
     return myKill

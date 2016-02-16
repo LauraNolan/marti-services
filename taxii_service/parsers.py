@@ -243,7 +243,7 @@ class STIXParser():
             for item in indicator.kill_chain_phases:
                 for each in lmco.LMCO_KILL_CHAIN_PHASES:
                     if each.phase_id == item.phase_id:
-                        kill_chain.append(each.name)
+                        kill_chain.append(str(each.ordinality) + ". " + each.name)
 
             modify_kill_chain_list(str(self.imported[indicator.id_][0]), self.imported[indicator.id_][1].id, kill_chain, 'taxii')
 
