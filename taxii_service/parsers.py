@@ -188,6 +188,7 @@ class STIXParser():
             self.parse_sources(self.package.indicators)
             self.parse_sectors(self.package.indicators)
             self.parse_sightings(self.package.indicators)
+            self.parse_kill_chain(self.package.indicators)
             if self.package.campaigns:
                 self.parse_related_campaigns(self.package.indicators, self.package.campaigns)
         elif self.package.campaigns:
@@ -231,14 +232,31 @@ class STIXParser():
                                sector_list, 'taxii')
         return
 
-    def parse_sightings(self, indicators):
+    def parse_kill_chain(self, indicators):
+        from crits.core.handlers import modify_kill_chain_list
+        import stix.common.kill_chains.lmco as lmco
 
         for indicator in indicators:
 
-            obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
+            kill_chain = []
 
-            for item in indicator.sightings.sighting.contributing_sources:
-                print item.to_xml()
+            for item in indicator.kill_chain_phases:
+                for each in lmco.LMCO_KILL_CHAIN_PHASES:
+                    if each.phase_id == item.phase_id:
+                        kill_chain.append(each.name)
+
+            modify_kill_chain_list(str(self.imported[indicator.id_][0]), self.imported[indicator.id_][1].id, kill_chain, 'taxii')
+
+        return
+
+    def parse_sightings(self, indicators):
+        from crits.core.handlers import add_sighting
+
+        for indicator in indicators:
+            for sighting in indicator.sightings:
+                for item in sighting.source.contributing_sources:
+                    add_sighting(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id),
+                             item.identity.name, item.time.start_time.value, 'taxii')
 
         return
 
