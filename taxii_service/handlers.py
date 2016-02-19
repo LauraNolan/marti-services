@@ -459,6 +459,23 @@ def to_stix_kill_chains(obj):
 
     return myKill
 
+def to_stix_tlp(obj):
+
+    from stix.data_marking import Marking, MarkingSpecification
+    from stix.extensions.marking.tlp import TLPMarkingStructure
+
+    marking_specification = MarkingSpecification()
+    marking_specification.controlled_structure = "//node() | //@*"
+
+    tlp = TLPMarkingStructure()
+    tlp.color = obj.tlp
+    marking_specification.marking_structures.append(tlp)
+
+    handling = Marking()
+    handling.add_marking(marking_specification)
+
+    return handling
+
 def to_stix_sightings(obj):
     from stix.indicator.sightings import Sighting
     from stix.common import InformationSource, Identity
@@ -637,6 +654,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
     relationships = {}
     stix = []
     stx = False
+    tlp = None
     from stix.indicator import Indicator as S_Ind
     for obj in items_to_convert:
         obj_type = obj._meta['crits_type']
@@ -654,6 +672,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
             comm =  to_stix_comments(obj)
             sight = to_stix_sightings(obj)
             kill = to_stix_kill_chains(obj)
+            tlp = to_stix_tlp(obj)
             if obj_type == class_from_type('Sample')._meta['crits_type']:
                 stx, releas = to_cybox_observable(obj, bin_fmt=bin_fmt)
             else:
@@ -734,7 +753,8 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
     header = STIXHeader(information_source=i_s,
                         description=StructuredText(value=stix_desc),
                         package_intents=[stix_int],
-                        title=stix_title)
+                        title=stix_title,
+                        handling=tlp)
 
     stix_msg['stix_obj'] = STIXPackage(incidents=stix_msg['stix_incidents'],
                     indicators=stix_msg['stix_indicators'],

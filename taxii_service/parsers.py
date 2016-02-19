@@ -191,6 +191,8 @@ class STIXParser():
             self.parse_kill_chain(self.package.indicators)
             if self.package.campaigns:
                 self.parse_related_campaigns(self.package.indicators, self.package.campaigns)
+            if self.package.stix_header:
+                self.parse_tlp(self.package.indicators, self.package.stix_header)
         elif self.package.campaigns:
             self.parse_campaigns(self.package.campaigns)
 
@@ -246,6 +248,24 @@ class STIXParser():
                         kill_chain.append(str(each.ordinality) + ". " + each.name)
 
             modify_kill_chain_list(str(self.imported[indicator.id_][0]), self.imported[indicator.id_][1].id, kill_chain, 'taxii')
+
+        return
+
+    def parse_tlp(self, indicators, header):
+
+        from crits.core.handlers import set_tlp
+        from stix.extensions.marking.tlp import TLPMarkingStructure
+
+        for marking in header.handling.markings:
+            for each in marking.marking_structures:
+                if isinstance(each, TLPMarkingStructure):
+                    tlp = each.color
+
+        if tlp:
+            for indicator in indicators:
+                set_tlp(str(self.imported[indicator.id_][0]),
+                        str(self.imported[indicator.id_][1].id),
+                        tlp, 'taxii')
 
         return
 
