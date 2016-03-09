@@ -136,22 +136,24 @@ class TaxiiAgentInbox(threading.Thread):
                             obj_item = class_from_id(samples[1]['collection'], doc['_id'])
                             item = doc
 
-                        if 'source' in item:
-                            for source in item['source']:
-                                if source['instances'] != []:
-                                    if sorted(source['instances'], reverse=True)[0]['analyst'] in 'taxii':
-                                        if sorted(source['instances'], reverse=True)[0]['date'] >= (doc[samples[1]['mod']] - timedelta(seconds=1)):
-                                            send_me = False
+                        # if 'source' in item:
+                        #     for source in item['source']:
+                        #         if source['instances'] != []:
+                        #             if sorted(source['instances'], reverse=True)[0]['analyst'] in 'taxii':
+                        #                 if sorted(source['instances'], reverse=True)[0]['date'] >= (doc[samples[1]['mod']] - timedelta(seconds=1)):
+                        #                     send_me = False
 
                         if send_me:
                             if 'releasability' in item:
                                 for release in item['releasability']:
                                     if release['name'] in feeds:
-                                        if release['instances'] != []:
-                                            if sorted(release['instances'], reverse=True)[0]['date'] <= (doc[samples[1]['mod']] - timedelta(seconds=1)):
-                                                release_list.append(release['name'])
-                                        else:
+                                        if release['release']:
                                             release_list.append(release['name'])
+                                        # if release['instances'] != []:
+                                        #     if sorted(release['instances'], reverse=True)[0]['date'] <= (doc[samples[1]['mod']] - timedelta(seconds=1)):
+                                        #         release_list.append(release['name'])
+                                        # else:
+                                        #     release_list.append(release['name'])
 
                             if release_list != []:
                                 data = handlers.run_taxii_service("taxii", obj_item, release_list, preview=False,confirmed=True)
