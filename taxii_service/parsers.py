@@ -25,6 +25,7 @@ from crits.samples.handlers import handle_file
 from crits.core.crits_mongoengine import EmbeddedSource
 from crits.core.handlers import does_source_exist
 from crits.core.handlers import source_add_update
+from crits.core.handlers import set_releasability_flag
 from cybox.core import Observable
 
 from crits.vocabulary.events import EventTypes
@@ -193,6 +194,7 @@ class STIXParser():
                 self.parse_related_campaigns(self.package.indicators, self.package.campaigns)
             if self.package.stix_header:
                 self.parse_tlp(self.package.indicators, self.package.stix_header)
+            self.set_releasability(self.package.indicators, source)
         elif self.package.campaigns:
             self.parse_campaigns(self.package.campaigns)
 
@@ -202,13 +204,17 @@ class STIXParser():
         if self.package.threat_actors:
             self.parse_threat_actors(self.package.threat_actors)
 
-    def parse_campaigns(self, campaigns):
+    def set_releasability(self, indicators, feed):
 
+        for indicator in indicators:
+            set_releasability_flag(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id), 'taxii', feed)
+        return
+
+    def parse_campaigns(self, campaigns):
+    #TODO - Finish me :)
         for campaign in campaigns:
-            print campaign.to_xml()
             res = add_campaign(str(campaign.title), str(campaign.description),
                          None, 'taxii')
-            print res
         return
 
     def parse_related_campaigns(self, indicators, campaigns):

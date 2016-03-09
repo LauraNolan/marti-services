@@ -110,8 +110,9 @@ class TaxiiAgentInbox(threading.Thread):
                         if 'releasability' in doc:
                             for release in doc['releasability']:
                                 if release['name'] in feeds:
-                                    if release['release']:
-                                        release_list.append(release['name'])
+                                    if 'release' in release:
+                                        if release['release']:
+                                            release_list.append(release['name'])
 
                         if release_list != []:
                             data = handlers.run_taxii_service("taxii", obj_item, release_list, preview=False,confirmed=True)
