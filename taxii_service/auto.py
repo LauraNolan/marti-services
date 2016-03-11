@@ -104,6 +104,7 @@ class TaxiiAgentInbox(threading.Thread):
                 for samples in TLO:
                     for doc in samples[0]['items']:
                         release_list = []
+                        release_id = None
 
                         obj_item = class_from_id(samples[1]['collection'], doc['_id'])
 
@@ -113,9 +114,11 @@ class TaxiiAgentInbox(threading.Thread):
                                     if 'release' in release:
                                         if release['release']:
                                             release_list.append(release['name'])
+                                            if 'reference_id' in release:
+                                                release_id = release['reference_id']
 
                         if release_list != []:
-                            data = handlers.run_taxii_service("taxii", obj_item, release_list, preview=False,confirmed=True)
+                            data = handlers.run_taxii_service("taxii", obj_item, release_list, preview=False,confirmed=True, ref_id=release_id)
                             print doc['_id'], " : ", data
 
                 crits_taxii.save()

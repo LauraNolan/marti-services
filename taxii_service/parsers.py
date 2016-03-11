@@ -208,7 +208,9 @@ class STIXParser():
 
         for indicator in indicators:
             if self.was_saved(indicator):
-                set_releasability_flag(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id), 'taxii', feed)
+                set_releasability_flag(str(self.imported[indicator.id_][0]),
+                                       str(self.imported[indicator.id_][1].id),
+                                       'taxii', feed, self.package.id_)
         return
 
     def parse_campaigns(self, campaigns):
@@ -514,14 +516,14 @@ class STIXParser():
                                     res = ip_add_update(ip,
                                                         iptype,
                                                         [self.source],
-                                                        analyst=analyst, feed=self.source.name, id=self.package.id_)
+                                                        analyst=analyst, id=self.package.id_)
                                     self.parse_res(imp_type, obs, res)
                     if isinstance(item, DomainName):
                         imp_type = "Domain"
                         for value in item.value.values:
                             res = upsert_domain(str(value),
                                                 [self.source],
-                                                username=analyst, feed=self.source.name, id=self.package.id_)
+                                                username=analyst, id=self.package.id_)
                             self.parse_res(imp_type, obs, res)
                     elif isinstance(item, Artifact):
                         # Not sure if this is right, and I believe these can be
@@ -589,7 +591,7 @@ class STIXParser():
                                           self.source,
                                           user=analyst,
                                           md5_digest=md5,
-                                          is_return_only_md5=False, feed=self.source.name, id=self.package.id_)
+                                          is_return_only_md5=False, id=self.package.id_)
                         self.parse_res(imp_type, obs, res)
                         if item.extracted_features:
                             self.parse_filenames(item.extracted_features, res['object'].id)
@@ -619,7 +621,7 @@ class STIXParser():
                                 data['cc'] = [str(r) for r in item.header.cc]
                         res = handle_email_fields(data,
                                                 analyst,
-                                                "STIX", feed=self.source.name, id=self.package.id_)
+                                                "STIX", id=self.package.id_)
 
                         # Should check for attachments and add them here.
                         self.parse_res(imp_type, obs, res)

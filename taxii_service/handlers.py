@@ -580,7 +580,7 @@ def has_cybox_repr(obj):
     except:
         return False
 
-def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
+def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
     """
     Converts a CRITs object to a STIX document.
 
@@ -756,18 +756,21 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
                         title=stix_title,
                         handling=tlp)
 
+    if not ref_id:
+        ref_id = uuid.uuid4()
+
     stix_msg['stix_obj'] = STIXPackage(incidents=stix_msg['stix_incidents'],
                     indicators=stix_msg['stix_indicators'],
                     threat_actors=stix_msg['stix_actors'],
                     stix_header=header,
                     campaigns=camp,
-                    id_=uuid.uuid4())
+                    id_=ref_id)
 
     #print stix_msg['stix_obj'].to_xml()
 
     return stix_msg
 
-def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirmed=False):
+def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirmed=False, ref_id=None):
     """
     :param analyst The analyst triggering this TAXII service call
     :param obj The context object being shared
@@ -827,7 +830,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
     # each/any recipient feed successfully.
 
     # Convert object and chosen related items to STIX/CybOX
-    stix_msg = to_stix(obj, relation_choices, bin_fmt="base64")
+    stix_msg = to_stix(obj, relation_choices, bin_fmt="base64", ref_id=ref_id)
     stix_doc = stix_msg['stix_obj']
 
     # if doing a preview of content, return content now
