@@ -207,7 +207,8 @@ class STIXParser():
     def set_releasability(self, indicators, feed):
 
         for indicator in indicators:
-            set_releasability_flag(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id), 'taxii', feed)
+            if self.was_saved(indicator):
+                set_releasability_flag(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id), 'taxii', feed)
         return
 
     def parse_campaigns(self, campaigns):
@@ -220,24 +221,26 @@ class STIXParser():
     def parse_related_campaigns(self, indicators, campaigns):
 
         for indicator in indicators:
-            for related_campaign in indicator.related_campaigns:
-                for campaign in campaigns:
-                    if campaign.id_ == related_campaign.item.idref:
-                        campaign_add(str(campaign.title), str(campaign.short_description),
-                                     str(campaign.description), False, 'taxii',
-                                     str(self.imported[indicator.id_][0]),
-                                     str(self.imported[indicator.id_][1].id))
+            if self.was_saved(indicator):
+                for related_campaign in indicator.related_campaigns:
+                    for campaign in campaigns:
+                        if campaign.id_ == related_campaign.item.idref:
+                            campaign_add(str(campaign.title), str(campaign.short_description),
+                                         str(campaign.description), False, 'taxii',
+                                         str(self.imported[indicator.id_][0]),
+                                         str(self.imported[indicator.id_][1].id))
         return
 
     def parse_sectors(self, indicators):
 
         for indicator in indicators:
-            sector_list = []
-            for sector in indicator.short_descriptions:
-                sector_list.append(str(sector))
-            modify_sector_list(str(self.imported[indicator.id_][0]),
-                               str(self.imported[indicator.id_][1].id),
-                               sector_list, 'taxii')
+            if self.was_saved(indicator):
+                sector_list = []
+                for sector in indicator.short_descriptions:
+                    sector_list.append(str(sector))
+                modify_sector_list(str(self.imported[indicator.id_][0]),
+                                   str(self.imported[indicator.id_][1].id),
+                                   sector_list, 'taxii')
         return
 
     def parse_kill_chain(self, indicators):
@@ -246,14 +249,16 @@ class STIXParser():
 
         for indicator in indicators:
 
-            kill_chain = []
+            if self.was_saved(indicator):
 
-            for item in indicator.kill_chain_phases:
-                for each in lmco.LMCO_KILL_CHAIN_PHASES:
-                    if each.phase_id == item.phase_id:
-                        kill_chain.append(str(each.ordinality) + ". " + each.name)
+                kill_chain = []
 
-            modify_kill_chain_list(str(self.imported[indicator.id_][0]), self.imported[indicator.id_][1].id, kill_chain, 'taxii')
+                for item in indicator.kill_chain_phases:
+                    for each in lmco.LMCO_KILL_CHAIN_PHASES:
+                        if each.phase_id == item.phase_id:
+                            kill_chain.append(str(each.ordinality) + ". " + each.name)
+
+                modify_kill_chain_list(str(self.imported[indicator.id_][0]), self.imported[indicator.id_][1].id, kill_chain, 'taxii')
 
         return
 
@@ -269,9 +274,10 @@ class STIXParser():
 
         if tlp:
             for indicator in indicators:
-                set_tlp(str(self.imported[indicator.id_][0]),
-                        str(self.imported[indicator.id_][1].id),
-                        tlp, 'taxii')
+                if self.was_saved(indicator):
+                    set_tlp(str(self.imported[indicator.id_][0]),
+                            str(self.imported[indicator.id_][1].id),
+                            tlp, 'taxii')
 
         return
 
@@ -279,10 +285,11 @@ class STIXParser():
         from crits.core.handlers import add_sighting
 
         for indicator in indicators:
-            for sighting in indicator.sightings:
-                for item in sighting.source.contributing_sources:
-                    add_sighting(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id),
-                             item.identity.name, item.time.start_time.value, 'taxii')
+            if self.was_saved(indicator):
+                for sighting in indicator.sightings:
+                    for item in sighting.source.contributing_sources:
+                        add_sighting(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id),
+                                 item.identity.name, item.time.start_time.value, 'taxii')
 
         return
 
@@ -290,18 +297,25 @@ class STIXParser():
 
         for indicator in indicators:
 
-            obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
+            if self.was_saved(indicator):
 
-            for item in indicator.producer.contributing_sources:
-                obj.add_source(source=str(item.identity.name),
-                    method=str(item.descriptions.__getitem__(2)),
-                    reference=str(item.descriptions.__getitem__(1)),
-                    date=item.time.start_time.value,
-                    analyst='taxii')
+                obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
 
-            obj.save(username='taxii')
-            obj.reload()
-            obj.sanitize_sources(username='taxii')
+                for item in indicator.producer.contributing_sources:
+                    obj.add_source(source=str(item.identity.name),
+                        method=str(item.descriptions.__getitem__(2)),
+                        reference=str(item.descriptions.__getitem__(1)),
+                        date=item.time.start_time.value,
+                        analyst='taxii')
+
+                obj.save(username='taxii')
+                obj.reload()
+                obj.sanitize_sources(username='taxii')
+
+    def was_saved(self, indicator):
+        if indicator.id_ in self.imported:
+            return True
+        return False
 
     def parse_comments(self, indicators):
 
@@ -310,21 +324,22 @@ class STIXParser():
         data = {}
 
         for indicator in indicators:
-            obj_id = self.imported[indicator.id_][1].id
-            obj_type = self.imported[indicator.id_][0]
-            comments = get_comments(obj_id, obj_type, False)
-            for rel in getattr(indicator, 'related_indicators', ()):
-                if rel.item.title in 'CRITs Comment(s)':
-                    data['comment'] = str(rel.item.description)
-                    data['url_key'] = str(obj_id)
-                    data['private'] = bool(False)
-                    send = True
-                    for comment in comments:
-                        if comment.edit_date == rel.item.timestamp:
-                            if comment.comment == data['comment']:
-                                send = False
-                    if send:
-                        comment_add(data, obj_type, obj_id, None, None, 'taxii', rel.item.timestamp)
+            if self.was_saved(indicator):
+                obj_id = self.imported[indicator.id_][1].id
+                obj_type = self.imported[indicator.id_][0]
+                comments = get_comments(obj_id, obj_type, False)
+                for rel in getattr(indicator, 'related_indicators', ()):
+                    if rel.item.title in 'CRITs Comment(s)':
+                        data['comment'] = str(rel.item.description)
+                        data['url_key'] = str(obj_id)
+                        data['private'] = bool(False)
+                        send = True
+                        for comment in comments:
+                            if comment.edit_date == rel.item.timestamp:
+                                if comment.comment == data['comment']:
+                                    send = False
+                        if send:
+                            comment_add(data, obj_type, obj_id, None, None, 'taxii', rel.item.timestamp)
 
     def parse_threat_actors(self, threat_actors):
         """
@@ -499,14 +514,14 @@ class STIXParser():
                                     res = ip_add_update(ip,
                                                         iptype,
                                                         [self.source],
-                                                        analyst=analyst)
+                                                        analyst=analyst, feed=self.source.name, id=self.package.id_)
                                     self.parse_res(imp_type, obs, res)
                     if isinstance(item, DomainName):
                         imp_type = "Domain"
                         for value in item.value.values:
                             res = upsert_domain(str(value),
                                                 [self.source],
-                                                username=analyst)
+                                                username=analyst, feed=self.source.name, id=self.package.id_)
                             self.parse_res(imp_type, obs, res)
                     elif isinstance(item, Artifact):
                         # Not sure if this is right, and I believe these can be
@@ -574,7 +589,7 @@ class STIXParser():
                                           self.source,
                                           user=analyst,
                                           md5_digest=md5,
-                                          is_return_only_md5=False)
+                                          is_return_only_md5=False, feed=self.source.name, id=self.package.id_)
                         self.parse_res(imp_type, obs, res)
                         if item.extracted_features:
                             self.parse_filenames(item.extracted_features, res['object'].id)
@@ -604,7 +619,7 @@ class STIXParser():
                                 data['cc'] = [str(r) for r in item.header.cc]
                         res = handle_email_fields(data,
                                                 analyst,
-                                                "STIX")
+                                                "STIX", feed=self.source.name, id=self.package.id_)
 
                         # Should check for attachments and add them here.
                         self.parse_res(imp_type, obs, res)

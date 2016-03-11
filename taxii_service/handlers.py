@@ -835,7 +835,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
         ret['preview'] = stix_doc.to_xml()
         return ret
     elif not confirmed: # if user has not accepted responsibility for releasability
-        release = verify_releasability(rcpts, stix_msg['final_objects'], analyst, False)
+        release = verify_releasability(rcpts, stix_msg['final_objects'], analyst, False, str(stix_doc.id_))
         if release: # if releasability needs to change
             ret['release_changes'] = release
             return ret # make user confirm changes, instead of sending messages
@@ -910,7 +910,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
             ret['failed_rcpts'].append((rcpt, current_status_type))
 
     if ret['rcpts']: # update releasability for successful TAXII messages
-        verify_releasability(ret['rcpts'], stix_msg['final_objects'], analyst, True)
+        verify_releasability(ret['rcpts'], stix_msg['final_objects'], analyst, True, str(stix_doc.id_))
 
     ret['success'] = True
     return ret
@@ -993,7 +993,7 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
         print e
         return (e)
 
-def verify_releasability(rcpts, items, analyst, update=False):
+def verify_releasability(rcpts, items, analyst, update=False, stix_id=None):
     """
     Given the list of items being sent to a list of recipients via TAXII,
     determine what releasability changes (if any) are necessary for the
@@ -1006,7 +1006,7 @@ def verify_releasability(rcpts, items, analyst, update=False):
     :return Dict mapping item to list of necessary releasability additions
     """
     date = datetime.now() # timestamp to use for updates, if updating
-    releaseable = Releasability.ReleaseInstance(analyst=analyst, date=date)
+    releaseable = Releasability.ReleaseInstance(analyst=analyst, date=date, reference=stix_id)
     changes = []
     for item in items: # for each item
         updates = [] # track sources that need releasability update
