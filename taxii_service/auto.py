@@ -29,9 +29,9 @@ class TaxiiAgentPolling(threading.Thread):
             if sc['auto_polling']:
 
                for crtfile in certfiles:
-                   (source, feed, filepath, polling, inbox) = crtfile.split(',')
+                   (source, feed, polling, inbox) = crtfile.split(',')
                    src = source.strip()
-                   if polling in 'auto':
+                   if polling in 'true':
                        handlers.execute_taxii_agent(analyst="taxii", method="TAXII Agent Web",feed=src)
 
             time.sleep(int(sc['polling_time']))
@@ -62,8 +62,8 @@ class TaxiiAgentInbox(threading.Thread):
             feeds = []
 
             for crtfile in certfiles:
-                   (source, feed2, filepath, polling, inbox) = crtfile.split(',')
-                   if inbox in 'auto':
+                   (source, feed2, polling, inbox) = crtfile.split(',')
+                   if inbox in 'true':
                         feeds.append(source)
 
             if sc['auto_inbox']:

@@ -62,18 +62,15 @@ class TAXIIClient(Service):
             errors.append("Inbox time must be an integer.")
         for crtfile in config['certfiles']:
             try:
-                (source, feed, filepath, polling, inbox) = crtfile.split(',')
+                (source, feed, polling, inbox) = crtfile.split(',')
             except ValueError as e:
                 errors.append("You must specify a source, feed name, "
                               "certificate path, auto/manuel polling, and auto/manuel inbox for each source. (%s)" % str(e))
                 break
             source.strip()
             feed.strip()
-            filepath.strip()
             if not does_source_exist(source):
                 errors.append("Invalid source: %s" % source)
-            if  not os.path.isfile(filepath):
-                errors.append("certfile does not exist: %s" % filepath)
         if errors:
             raise ServiceConfigError("\n".join(errors))
 

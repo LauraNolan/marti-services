@@ -97,65 +97,102 @@ class TAXIIServiceConfigForm(forms.Form):
     hostname = forms.CharField(required=True,
                                label="Hostname",
                                initial='',
-                               widget=forms.TextInput(),
+                               widget=forms.TextInput(attrs={'data-step': '1', 'data-intro': 'Enter IP of TAXII server'}),
                                help_text="TAXII server hostname.")
 
     https = forms.BooleanField(required=False,
                                label="HTTPS",
                                initial=True,
-                               help_text="Connect using HTTPS.")
+                               help_text="Connect using HTTPS.",
+                               widget=forms.CheckboxInput(attrs={'data-step': '2', 'data-intro': 'Check if the TAXII server uses SSL'}))
 
 
     keyfile = forms.CharField(required=True,
                              label="Keyfile",
                              initial='',
-                             widget=forms.TextInput(),
+                             widget=forms.TextInput(
+                                 attrs={
+                                     'data-step': '3',
+                                     'data-intro': 'Enter the location of the keyfile obtained from the TAXII server'}),
                              help_text="Location of your keyfile.")
 
     certfile = forms.CharField(required=True,
                               label="Certfile",
                               initial='',
-                              widget=forms.TextInput(),
+                              widget=forms.TextInput(
+                                  attrs={
+                                      'data-step': '4',
+                                      'data-intro': 'Enter the location of the certfile obtained from the TAXII server'}),
                               help_text="Location of your certificate.")
 
     data_feed = forms.CharField(required=True,
                                 label="Data Feed",
                                 initial='',
-                                widget=forms.TextInput(),
+                                widget=forms.TextInput(
+                                    attrs={'data-step': '5',
+                                           'data-intro': 'What name would you like for your TAXII feed?'}),
                                 help_text="Your TAXII data feed name.")
 
     create_events = forms.BooleanField(required=False,
                                        label="Events",
                                        initial=False,
-                                       help_text="Create events for all STIX documents.")
+                                       help_text="Create events for all STIX documents.",
+                                       widget=forms.CheckboxInput(
+                                           attrs={
+                                               'data-step': '6',
+                                               'data-intro': 'No idea what this means...'}))
 
     auto_polling = forms.BooleanField(required=False,
                                        label="Auto Polling",
                                        initial=False,
-                                       help_text="Auto poll Taxii feeds.")
+                                       help_text="Auto poll Taxii feeds.",
+                                      widget=forms.CheckboxInput(
+                                          attrs={'data-step': '7',
+                                                 'data-intro': 'Do you want MARTI to poll the TAXII server automatically?'}))
 
     auto_inbox = forms.BooleanField(required=False,
                                        label="Auto Inbox",
                                        initial=False,
-                                       help_text="Auto send Taxii feeds.")
+                                       help_text="Auto send Taxii feeds.",
+                                    widget=forms.CheckboxInput(
+                                        attrs={'data-step': '8',
+                                               'data-intro': 'Do you want MARTI to send data to the TAXII server automatically (if released)?'}))
 
     polling_time = forms.CharField(required=True,
                               label="Polling Frequency (Seconds)",
                               initial='30',
-                              widget=forms.TextInput(),
+                              widget=forms.TextInput(
+                                  attrs={'data-step': '9',
+                                         'data-intro': 'How often (seconds) do you want to check for new items?'}),
                               help_text="How often do you want to poll the TAXII Server")
 
     inbox_time = forms.CharField(required=True,
                               label="Inbox Frequency (Seconds)",
                               initial='30',
-                              widget=forms.TextInput(),
+                              widget=forms.TextInput(
+                                  attrs={'data-step': '10',
+                                         'data-intro': 'How often (seconds) do you want to send data?'}),
                               help_text="How often do you want to poll the TAXII Server")
 
     certfiles = forms.CharField(required=True,
                                 label="Configuration",
                                 initial='',
                                 widget=forms.Textarea(attrs={'cols': 80,
-                                                            'rows': 10}),
+                                                            'rows': 10,
+                                                             'data-step': '11',
+                                                             'data-intro': 'Here is where you set which feeds/sources you want to '
+                                                                           'send/receive from the TAXII server. </br> '
+                                                                           '<strong>source</strong> - The name of the MARTI source </br> '
+                                                                           '<strong>feed</strong> - The name of the TAXII feed</br> '
+                                                                           '<strong>poll</strong> - \'true\' if you wish to automatically '
+                                                                           'poll the TAXII server for this feed </br><strong>inbox</strong> '
+                                                                           '- \'true\' if you want to automatically send this source to the '
+                                                                           'TAXII server if it\'s released </br>Example(s): </br>{source},'
+                                                                           '{feed},{poll},{inbox} </br>ITAC,ITAC,false,true (This means that '
+                                                                           'any item from an ITAC source will automatically go to the TAXII '
+                                                                           'server after it\'s released.) </br>ITAC,UARC,true,false (This '
+                                                                           'means that the TAXII UARC feed will periodically get polled and '
+                                                                           'stored as an ITAC source.)'}),
                                 help_text="Comma delimited list of CRITs"
                                           " source name, TAXII feed name,"
                                           " certificate file on disk for that"

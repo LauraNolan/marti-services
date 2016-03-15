@@ -811,10 +811,10 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
     # collect the list of destination data feeds for the message
     destination_feeds = []
     for crtfile in certfiles:
-        (source, feed, filepath, polling, inbox) = crtfile.split(',')
+        (source, feed, polling, inbox) = crtfile.split(',')
         src = source.strip()
         if src in rcpts:
-            destination_feeds.append((src, feed.strip(), filepath.strip()))
+            destination_feeds.append((src, feed.strip()))
 
     if not destination_feeds or len(destination_feeds) != len(rcpts):
         # TAXII form ensures that this shouldn't happen, but just in case...
@@ -865,12 +865,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
     # Store each TAXII message in a list.
     for feed in destination_feeds:
         rcpt = feed[0]
-        # Create encrypted block
-        encrypted_block = encrypt_block(
-            tm.ContentBlock(
-                content_binding = t.CB_STIX_XML_111,
-                content = stix_doc.to_xml()).to_xml(),
-            feed[2])
+
         # Try TAXII 1.1 first:
         try_10 = False
         current_status_type = None
