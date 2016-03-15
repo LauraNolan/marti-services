@@ -195,8 +195,7 @@ class TAXIIServiceConfigForm(forms.Form):
                                                                            'stored as an ITAC source.)'}),
                                 help_text="Comma delimited list of CRITs"
                                           " source name, TAXII feed name,"
-                                          " certificate file on disk for that"
-                                          " source, polling, inbox.")
+                                          " polling, inbox.")
 
     def __init__(self, *args, **kwargs):
         super(TAXIIServiceConfigForm, self).__init__(*args, **kwargs)
