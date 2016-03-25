@@ -65,7 +65,7 @@ class TAXIIClient(Service):
                 (source, feed, polling, inbox) = crtfile.split(',')
             except ValueError as e:
                 errors.append("You must specify a source, feed name, "
-                              "certificate path, auto/manuel polling, and auto/manuel inbox for each source. (%s)" % str(e))
+                              " true/false polling, and true/false inbox for each source. (%s)" % str(e))
                 break
             source.strip()
             feed.strip()
