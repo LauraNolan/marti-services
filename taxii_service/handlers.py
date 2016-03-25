@@ -987,7 +987,6 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
         return (response, taxii_message)
     # can happen if 'hostname' is reachable, but is not a TAXII server, etc
     except Exception, e:
-        print "an exception occured.. oh SHIT"
         print e
         return (e)
 

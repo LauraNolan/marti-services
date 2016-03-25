@@ -91,6 +91,20 @@ def get_supported_types():
                        'Sample']
     return supported_types
 
+class TAXIIFeeds(forms.Form):
+    error_css_class = 'error'
+    required_css_class = 'required'
+
+    source = forms.CharField(required=False,
+                              label="source",
+                              initial='30',
+                              widget=forms.TextInput())
+
+    feed = forms.CharField(required=False,
+                              label="feed",
+                              initial='30',
+                              widget=forms.TextInput())
+
 class TAXIIServiceConfigForm(forms.Form):
     error_css_class = 'error'
     required_css_class = 'required'
@@ -137,10 +151,7 @@ class TAXIIServiceConfigForm(forms.Form):
                                        label="Events",
                                        initial=False,
                                        help_text="Create events for all STIX documents.",
-                                       widget=forms.CheckboxInput(
-                                           attrs={
-                                               'data-step': '6',
-                                               'data-intro': 'No idea what this means...'}))
+                                       widget=forms.CheckboxInput())
 
     auto_polling = forms.BooleanField(required=False,
                                        label="Auto Polling",
