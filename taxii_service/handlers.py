@@ -509,6 +509,8 @@ def to_stix_comments(obj):
             ind = S_Ind()
             ind.title = "CRITs Comment(s)"
             ind.description = each.comment
+            if each.obj_type not in "Email":
+                ind.short_description = each.url_key
             ind.producer = to_stix_information_source(each)
             ind.timestamp = each.edit_date #should be date, but for some reason, it's not getting the correct value
             ind_comments.append(ind)

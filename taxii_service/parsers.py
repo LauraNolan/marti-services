@@ -333,7 +333,10 @@ class STIXParser():
                 for rel in getattr(indicator, 'related_indicators', ()):
                     if rel.item.title in 'CRITs Comment(s)':
                         data['comment'] = str(rel.item.description)
-                        data['url_key'] = str(obj_id)
+                        if rel.item.short_description:
+                            data['url_key'] = str(rel.item.short_description)
+                        else:
+                            data['url_key'] = str(obj_id)
                         data['private'] = bool(False)
                         send = True
                         for comment in comments:
