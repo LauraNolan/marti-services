@@ -319,6 +319,21 @@ class STIXParser():
             return True
         return False
 
+    def parse_relationship(self, indicators):
+
+        for indicator in indicators:
+            if self.was_saved(indicator):
+
+                obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
+
+                for rel in getattr(indicator, 'related_indicators', ()):
+                    if rel.item.title in 'MARTI Relation':
+                        print rel.item.to_xml()
+
+                obj.save(username='taxii')
+                obj.reload()
+                obj.sanitize_sources(username='taxii')
+
     def parse_comments(self, indicators):
 
         from crits.comments.handlers import get_comments

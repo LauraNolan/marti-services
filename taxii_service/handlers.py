@@ -476,6 +476,27 @@ def to_stix_tlp(obj):
 
     return handling
 
+def to_stix_relationship(obj):
+    # "relationship" : "Related To",
+		# 	"rel_reason" : "",
+    from stix.indicator import Indicator
+
+    ind_rel = []
+
+    for relationship in obj.relationships:
+        #if not relationship.private: #testing
+        ind = Indicator()
+        ind.title = "MARTI Relation"
+        ind.timestamp = relationship.relationship_date
+        ind.confidence = relationship.rel_confidence
+        ind.id_ = relationship.url_key
+        ind.add_indicator_type(relationship.type)
+        ind.description = relationship.rel_reason
+        ind.short_description = relationship.relationship
+        ind_rel.append(ind)
+
+    return
+
 def to_stix_sightings(obj):
     from stix.indicator.sightings import Sighting
     from stix.common import InformationSource, Identity
@@ -509,8 +530,7 @@ def to_stix_comments(obj):
             ind = S_Ind()
             ind.title = "CRITs Comment(s)"
             ind.description = each.comment
-            if each.obj_type not in "Email":
-                ind.short_description = each.url_key
+            ind.short_description = each.url_key
             ind.producer = to_stix_information_source(each)
             ind.timestamp = each.edit_date #should be date, but for some reason, it's not getting the correct value
             ind_comments.append(ind)
@@ -672,6 +692,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
         elif obj_type in obs_list: # convert to CybOX observable
             camp = to_stix_campaign(obj)
             comm =  to_stix_comments(obj)
+            rel = to_stix_relationship(obj)
             sight = to_stix_sightings(obj)
             kill = to_stix_kill_chains(obj)
             tlp = to_stix_tlp(obj)
@@ -688,6 +709,8 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
                 for each in camp:
                     ind.add_related_campaign(each)
                 for each in comm:
+                    ind.add_related_indicator(each)
+                for each in rel:
                     ind.add_related_indicator(each)
                 for each in kill:
                     ind.add_kill_chain_phase(each)
