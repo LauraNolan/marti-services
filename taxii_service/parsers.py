@@ -186,6 +186,7 @@ class STIXParser():
         if self.package.indicators:
             self.parse_indicators(self.package.indicators)
             self.parse_comments(self.package.indicators)
+            self.parse_relationship(self.package.indicators)
             self.parse_sources(self.package.indicators)
             self.parse_sectors(self.package.indicators)
             self.parse_sightings(self.package.indicators)

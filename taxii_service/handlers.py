@@ -490,12 +490,12 @@ def to_stix_relationship(obj):
         ind.timestamp = relationship.relationship_date
         ind.confidence = relationship.rel_confidence
         ind.id_ = relationship.url_key
-        ind.add_indicator_type(relationship.type)
+        ind.add_indicator_type('File Hash Watchlist')
         ind.description = relationship.rel_reason
         ind.short_description = relationship.relationship
         ind_rel.append(ind)
 
-    return
+    return ind_rel
 
 def to_stix_sightings(obj):
     from stix.indicator.sightings import Sighting
