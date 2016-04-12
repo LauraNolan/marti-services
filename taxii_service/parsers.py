@@ -322,18 +322,17 @@ class STIXParser():
 
     def parse_relationship(self, indicators):
 
+        print '...inside of parse relationship...'
+
         for indicator in indicators:
             if self.was_saved(indicator):
-
-                obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
+                print 'indicator was saved'
 
                 for rel in getattr(indicator, 'related_indicators', ()):
+                    print 'bla'
                     if rel.item.title in 'MARTI Relation':
+                        print 'found one'
                         print rel.item.to_xml()
-
-                obj.save(username='taxii')
-                obj.reload()
-                obj.sanitize_sources(username='taxii')
 
     def parse_comments(self, indicators):
 
