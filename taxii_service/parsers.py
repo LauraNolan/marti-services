@@ -344,18 +344,16 @@ class STIXParser():
 
                 for rel in getattr(indicator, 'related_indicators', ()):
                     if rel.item.title in 'MARTI Relation':
-                        result = forge_relationship(type_=obj._meta['crits_type'],
+                        forge_relationship(type_=obj._meta['crits_type'],
                                          id_=obj.get_url_key(),
                                          right_type=self.get_marti_type(rel.item.indicator_types),
-                                         right_id=rel.item.id_,
-                                         rel_type=rel.item.short_description,
+                                         right_id=str(rel.item.id_),
+                                         rel_type=str(rel.item.short_description),
                                          rel_date=rel.item.timestamp,
                                          user='taxii',
-                                         rel_reason=rel.item.description,
-                                         rel_confidence=rel.item.confidence,
+                                         rel_reason=str(rel.item.description),
+                                         rel_confidence=str(rel.item.confidence.value),
                                          get_rels=True)
-                        print 'saved the item'
-                        print result
 
     def parse_comments(self, indicators):
 
