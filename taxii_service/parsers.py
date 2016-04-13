@@ -320,19 +320,42 @@ class STIXParser():
             return True
         return False
 
-    def parse_relationship(self, indicators):
+    def get_marti_type(self, ind_types):
 
-        print '...inside of parse relationship...'
+        from stix.common.vocabs import IndicatorType
+        for ind_type in ind_types:
+            if ind_type == IndicatorType.TERM_FILE_HASH_WATCHLIST:
+                return 'Sample'
+            elif ind_type == IndicatorType.TERM_MALICIOUS_EMAIL:
+                return 'Email'
+            elif ind_type == IndicatorType.TERM_DOMAIN_WATCHLIST:
+                return 'Domain'
+            elif ind_type == IndicatorType.TERM_IP_WATCHLIST:
+                return 'IP'
+            elif ind_type == IndicatorType.TERM_ANONYMIZATION:
+                return 'Campaign'
+
+    def parse_relationship(self, indicators):
+        from crits.relationships.handlers import forge_relationship
 
         for indicator in indicators:
             if self.was_saved(indicator):
-                print 'indicator was saved'
+                obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
 
                 for rel in getattr(indicator, 'related_indicators', ()):
-                    print 'bla'
                     if rel.item.title in 'MARTI Relation':
-                        print 'found one'
-                        print rel.item.to_xml()
+                        result = forge_relationship(type_=obj._meta['crits_type'],
+                                         id_=obj.get_url_key(),
+                                         right_type=self.get_marti_type(rel.item.indicator_types),
+                                         right_id=rel.item.id_,
+                                         rel_type=rel.item.short_description,
+                                         rel_date=rel.item.timestamp,
+                                         user='taxii',
+                                         rel_reason=rel.item.description,
+                                         rel_confidence=rel.item.confidence,
+                                         get_rels=True)
+                        print 'saved the item'
+                        print result
 
     def parse_comments(self, indicators):
 
@@ -438,12 +461,12 @@ class STIXParser():
             #print "this is an indicator: ", indicator.to_xml()
 
             # store relationships
-            for rel in getattr(indicator, 'related_indicators', ()):
-                if rel.item.title not in 'CRITs Comment(s)':
-                    self.relationships.append((indicator.id_,
-                                           rel.relationship.value,
-                                           rel.item.idref,
-                                           rel.confidence.value.value))
+            #for rel in getattr(indicator, 'related_indicators', ()):
+               # if rel.item.title not in 'CRITs Comment(s)':
+                   # self.relationships.append((indicator.id_,
+                                          # rel.relationship.value,
+                                         #  rel.item.idref,
+                                          # rel.confidence.value.value))
 
             # handled indicator-wrapped observable
             if getattr(indicator, 'title', ""):

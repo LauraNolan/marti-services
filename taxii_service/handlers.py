@@ -476,9 +476,21 @@ def to_stix_tlp(obj):
 
     return handling
 
+def get_indicator_type(type):
+
+    from stix.common.vocabs import IndicatorType
+    if type == 'Sample':
+        return IndicatorType.TERM_FILE_HASH_WATCHLIST
+    elif type == 'Email':
+        return IndicatorType.TERM_MALICIOUS_EMAIL
+    elif type == 'Domain':
+        return IndicatorType.TERM_DOMAIN_WATCHLIST
+    elif type == 'IP':
+        return IndicatorType.TERM_IP_WATCHLIST
+    elif type == 'Campaign':
+        return IndicatorType.TERM_ANONYMIZATION
+
 def to_stix_relationship(obj):
-    # "relationship" : "Related To",
-		# 	"rel_reason" : "",
     from stix.indicator import Indicator
 
     ind_rel = []
@@ -490,7 +502,7 @@ def to_stix_relationship(obj):
         ind.timestamp = relationship.relationship_date
         ind.confidence = relationship.rel_confidence
         ind.id_ = relationship.url_key
-        ind.add_indicator_type('File Hash Watchlist')
+        ind.add_indicator_type(get_indicator_type(relationship.rel_type))
         ind.description = relationship.rel_reason
         ind.short_description = relationship.relationship
         ind_rel.append(ind)
