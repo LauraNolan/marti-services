@@ -344,7 +344,7 @@ class STIXParser():
 
                 for rel in getattr(indicator, 'related_indicators', ()):
                     if rel.item.title in 'MARTI Relation':
-                        forge_relationship(type_=obj._meta['crits_type'],
+                        result = forge_relationship(type_=obj._meta['crits_type'],
                                          id_=obj.get_url_key(),
                                          right_type=self.get_marti_type(rel.item.indicator_types),
                                          right_id=str(rel.item.id_),
