@@ -301,19 +301,19 @@ class STIXParser():
         for indicator in indicators:
 
             if self.was_saved(indicator):
+                if indicator.item.title not in 'CRITs Comment(s)':
+                    obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
 
-                obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
+                    for item in indicator.producer.contributing_sources:
+                        obj.add_source(source=str(item.identity.name),
+                            method=str(item.descriptions.__getitem__(2)),
+                            reference=str(item.descriptions.__getitem__(1)),
+                            date=item.time.start_time.value,
+                            analyst='taxii')
 
-                for item in indicator.producer.contributing_sources:
-                    obj.add_source(source=str(item.identity.name),
-                        method=str(item.descriptions.__getitem__(2)),
-                        reference=str(item.descriptions.__getitem__(1)),
-                        date=item.time.start_time.value,
-                        analyst='taxii')
-
-                obj.save(username='taxii')
-                obj.reload()
-                obj.sanitize_sources(username='taxii')
+                    obj.save(username='taxii')
+                    obj.reload()
+                    obj.sanitize_sources(username='taxii')
 
     def was_saved(self, indicator):
         if indicator.id_ in self.imported:
@@ -375,13 +375,17 @@ class STIXParser():
                             data['url_key'] = str(obj_id)
                         data['private'] = bool(False)
                         send = True
+                        source_analyst = None
+
+                        for item in indicator.producer.contributing_sources:
+                            source_analyst = str(item.identity.name)
+
                         for comment in comments:
                             if comment.edit_date == rel.item.timestamp:
-                                #TODO fix me!
                                 if comment.comment == data['comment']:
                                     send = False
                         if send:
-                            comment_add(data, obj_type, obj_id, None, None, 'taxii', rel.item.timestamp)
+                            comment_add(data, obj_type, obj_id, None, None, 'taxii', rel.item.timestamp, source_analyst)
 
     def parse_threat_actors(self, threat_actors):
         """
