@@ -546,9 +546,6 @@ def to_stix_comments(obj):
             ind.producer = to_stix_information_source(each)
             ind.timestamp = each.edit_date #should be date, but for some reason, it's not getting the correct value
 
-            sight = to_stix_sightings(each)
-            ind.sightings.append(sight)
-
             ind_comments.append(ind)
 
     return ind_comments
