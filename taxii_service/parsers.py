@@ -377,6 +377,7 @@ class STIXParser():
                         send = True
                         for comment in comments:
                             if comment.edit_date == rel.item.timestamp:
+                                #TODO fix me!
                                 if comment.comment == data['comment']:
                                     send = False
                         if send:
