@@ -456,16 +456,6 @@ class STIXParser():
         analyst = self.source_instance.analyst
         for indicator in indicators: # for each STIX indicator
 
-            #print "this is an indicator: ", indicator.to_xml()
-
-            # store relationships
-            #for rel in getattr(indicator, 'related_indicators', ()):
-               # if rel.item.title not in 'CRITs Comment(s)':
-                   # self.relationships.append((indicator.id_,
-                                          # rel.relationship.value,
-                                         #  rel.item.idref,
-                                          # rel.confidence.value.value))
-
             # handled indicator-wrapped observable
             if getattr(indicator, 'title', ""):
                 if "Top-Level Object" in indicator.title:

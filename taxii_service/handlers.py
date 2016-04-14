@@ -541,7 +541,10 @@ def to_stix_comments(obj):
         if not each.private:
             ind = S_Ind()
             ind.title = "CRITs Comment(s)"
-            ind.description = each.comment
+            if each.analyst in 'taxii':
+                ind.description = each.comment
+            else:
+                ind.description = each.comment + " - " + settings.COMPANY_NAME
             ind.short_description = each.url_key
             ind.producer = to_stix_information_source(each)
             ind.timestamp = each.edit_date #should be date, but for some reason, it's not getting the correct value
