@@ -500,7 +500,7 @@ def to_stix_relationship(obj):
         ind = Indicator()
         ind.title = "MARTI Relation"
         ind.timestamp = relationship.relationship_date
-        ind.confidence = relationship.rel_confidence
+        ind.confidence = relationship.rel_confidence.title()
         ind.id_ = relationship.url_key
         ind.add_indicator_type(get_indicator_type(relationship.rel_type))
         ind.description = relationship.rel_reason
