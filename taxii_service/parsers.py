@@ -301,19 +301,19 @@ class STIXParser():
         for indicator in indicators:
 
             if self.was_saved(indicator):
-                if indicator.item.title not in 'CRITs Comment(s)':
-                    obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
 
-                    for item in indicator.producer.contributing_sources:
-                        obj.add_source(source=str(item.identity.name),
-                            method=str(item.descriptions.__getitem__(2)),
-                            reference=str(item.descriptions.__getitem__(1)),
-                            date=item.time.start_time.value,
-                            analyst='taxii')
+                obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
 
-                    obj.save(username='taxii')
-                    obj.reload()
-                    obj.sanitize_sources(username='taxii')
+                for item in indicator.producer.contributing_sources:
+                    obj.add_source(source=str(item.identity.name),
+                        method=str(item.descriptions.__getitem__(2)),
+                        reference=str(item.descriptions.__getitem__(1)),
+                        date=item.time.start_time.value,
+                        analyst='taxii')
+
+                obj.save(username='taxii')
+                obj.reload()
+                obj.sanitize_sources(username='taxii')
 
     def was_saved(self, indicator):
         if indicator.id_ in self.imported:
