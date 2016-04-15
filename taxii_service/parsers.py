@@ -381,6 +381,8 @@ class STIXParser():
                             source_analyst = str(item.identity.name)
 
                         for comment in comments:
+                            print 'this is the stored type: ', type(comment.comment)
+                            print 'this is the sent type: ', type(data['comment'])
                             if comment.edit_date == rel.item.timestamp:
                                 if comment.comment == data['comment']:
                                     send = False
