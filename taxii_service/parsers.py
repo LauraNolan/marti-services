@@ -377,7 +377,7 @@ class STIXParser():
                         send = True
                         source_analyst = None
 
-                        for item in indicator.producer.contributing_sources:
+                        for item in rel.item.producer.contributing_sources:
                             source_analyst = str(item.identity.name)
 
                         for comment in comments:
