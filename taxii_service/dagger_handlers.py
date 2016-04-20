@@ -29,14 +29,10 @@ def set_value(marti_name,dagger_value):
         print 'not here'
         return False
 
-    if dagger_value == 1:
-        dagger_value = dagger_value + item.decay
-    if dagger_value < 0:
-        dagger_value = 0
-
-    item.dagger_value = dagger_value
+    item.dagger_value = dagger_value + item.decay
 
     item.save()
+    item.reload()
 
 def decay_value(marti_name):
 

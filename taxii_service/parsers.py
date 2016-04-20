@@ -50,6 +50,8 @@ from crits.campaigns.handlers import campaign_add, add_campaign
 from crits.core.handlers import modify_sector_list
 from crits.samples.handlers import modify_sample_filenames
 
+from . import dagger_handlers
+
 class STIXParserException(Exception):
     """
     General exception for STIX Parsing.
@@ -121,6 +123,9 @@ class STIXParser():
         stix_header = self.package.stix_header
         if stix_header and stix_header.information_source and stix_header.information_source.identity:
             self.information_source = stix_header.information_source.identity.name
+
+            dagger_handlers.set_value(self.information_source,1)
+
             if self.information_source:
                 info_src = "STIX Source: %s" % self.information_source
                 if not reference:

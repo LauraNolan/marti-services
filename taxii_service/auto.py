@@ -51,8 +51,8 @@ def start_polling():
 
     if 'thread' in sc:
         if not sc['thread']:
-            sc['thread'] = True
-            update_config('taxii_service', sc, 'taxii')
+            #sc['thread'] = True
+            #update_config('taxii_service', sc, 'taxii')
 
             if not polling_thread.isAlive():
                 polling_thread.start()

@@ -18,10 +18,11 @@ def init_values(marti_name,dagger_name,decay=None,dagger_value=None):
 
     if not item:
         dagger_item.dagger_value = 0
-    if dagger_value:
+    if dagger_value is not None:
         dagger_item.dagger_value = dagger_value
 
     dagger_item.save()
+    dagger_item.reload()
 
 def set_value(marti_name,dagger_value):
 
@@ -38,6 +39,7 @@ def set_value(marti_name,dagger_value):
     item.dagger_value = dagger_value
 
     item.save()
+    item.reload()
 
 def decay_value(marti_name):
 

@@ -43,8 +43,8 @@ def start_dagger():
 
     if 'thread' in sc:
         if not sc['thread']:
-            sc['thread'] = True
-            update_config('dagger_service', sc, 'taxii')
+            #sc['thread'] = True
+            #update_config('dagger_service', sc, 'taxii')
 
             if not polling_thread.isAlive():
                 polling_thread.start()

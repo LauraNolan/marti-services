@@ -46,8 +46,6 @@ from crits.services.handlers import get_config
 from crits.vocabulary.ips import IPTypes
 from crits.vocabulary.relationships import RelationshipTypes
 
-from . import dagger_handlers
-
 logger = logging.getLogger(__name__)
 
 def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
@@ -188,8 +186,6 @@ def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
 
         objs = import_standards_doc(data, analyst, method, ref=mid,
                                     make_event=create_events, source=feed)
-
-        dagger_handlers.set_value(feed,1)
 
         for k in objs['imported']:
             ret['successes'] += 1

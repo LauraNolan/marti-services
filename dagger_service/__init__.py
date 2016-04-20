@@ -57,8 +57,6 @@ class DaggerClient(Service):
             else:
                 handlers.init_values(marti_name,dagger_name,decay)
 
-            if not does_source_exist(marti_name):
-                errors.append("Invalid source: %s" % marti_name)
         if errors:
             raise ServiceConfigError("\n".join(errors))
 
