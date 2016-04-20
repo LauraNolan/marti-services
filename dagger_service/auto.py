@@ -35,6 +35,10 @@ def start_dagger():
 
     # Get config and grab some stuff we need.
     sc = get_config('dagger_service')
+    
+    if not sc:
+        return
+
     sc = sc.to_dict()
 
     if 'thread' in sc:
