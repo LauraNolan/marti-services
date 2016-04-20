@@ -108,6 +108,13 @@ class TAXIIFeeds(forms.Form):
 class TAXIIServiceConfigForm(forms.Form):
     error_css_class = 'error'
     required_css_class = 'required'
+
+    active = forms.BooleanField(required=False,
+                               label="Active",
+                               initial=False,
+                               help_text="Check to activate TAXII service",
+                               widget=forms.CheckboxInput())
+
     hostname = forms.CharField(required=True,
                                label="Hostname",
                                initial='',
@@ -207,6 +214,10 @@ class TAXIIServiceConfigForm(forms.Form):
                                 help_text="Comma delimited list of CRITs"
                                           " source name, TAXII feed name,"
                                           " polling, inbox.")
+
+    thread = forms.BooleanField(widget=forms.HiddenInput(),
+                                initial=False,
+                                required=False)
 
     def __init__(self, *args, **kwargs):
         super(TAXIIServiceConfigForm, self).__init__(*args, **kwargs)

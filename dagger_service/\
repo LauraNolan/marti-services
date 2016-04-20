@@ -14,24 +14,19 @@ import libtaxii as t
 import libtaxii.clients as tc
 import libtaxii.messages as tm
 import libtaxii.messages_11 as tm11
-from libtaxii.common import generate_message_id
-from libtaxii.constants import *
 
 from django.conf import settings
 
-from cybox.common import String, DateTime, Hash, UnsignedLong, Time
+from cybox.common import String, DateTime, Hash, UnsignedLong
 from cybox.common.object_properties import CustomProperties, Property
-from cybox.common.extracted_features import ExtractedFeatures, ExtractedStrings
-from cybox.common.extracted_string import ExtractedString
 from cybox.core import Observable
 from cybox.objects.address_object import Address, EmailAddress
 from cybox.objects.artifact_object import Artifact, Base64Encoding, ZlibCompression
 from cybox.objects.domain_name_object import DomainName
-from cybox.objects.email_message_object import EmailHeader, EmailMessage, Attachments, EmailRecipients
+from cybox.objects.email_message_object import EmailHeader, EmailMessage, Attachments
 from cybox.objects.file_object import File
 
 from stix.threat_actor import ThreatActor
-from stix.core import Campaign
 
 from . import taxii
 from . import formats
@@ -45,8 +40,6 @@ from crits.services.handlers import get_config
 
 from crits.vocabulary.ips import IPTypes
 from crits.vocabulary.relationships import RelationshipTypes
-
-from . import dagger_handlers
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +79,7 @@ def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
 
     # Last document's end time is our start time.
     if not start:
-        last = taxii.Taxii.get_last(feed)
+        last = taxii.Taxii.get_last()
         if last:
             start = pytz.utc.localize(last.end)
 
@@ -124,13 +117,12 @@ def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
         proxy = settings.HTTP_PROXY
         if not proxy.startswith('http://'):
             proxy = 'http://' + proxy
-        client.setProxy(proxy)
+        client.setProxy(proxy, proxy_type=tc.HttpClient.PROXY_HTTPS)
 
     crits_taxii = taxii.Taxii()
     crits_taxii.runtime = runtime
     crits_taxii.end = end
-    crits_taxii.feed = feed
-    #print "about to poll the YETI server"
+
     # Poll using 1.1 then 1.0 if that fails.
     poll_msg = tm11.PollRequest(message_id=tm11.generate_message_id(),
                                 collection_name=feed,
@@ -138,7 +130,7 @@ def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
                                 exclusive_begin_timestamp_label=start,
                                 inclusive_end_timestamp_label=end)
 
-    response = client.callTaxiiService2(hostname, '/services/poll/', t.VID_TAXII_XML_11,
+    response = client.callTaxiiService2(hostname, '/poll/', t.VID_TAXII_XML_11,
                                         poll_msg.to_xml())
     taxii_msg = t.get_message_from_http_response(response, poll_msg.message_id)
 
@@ -150,7 +142,7 @@ def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
                                     exclusive_begin_timestamp_label=start,
                                     inclusive_end_timestamp_label=end)
 
-            response = client.callTaxiiService2(hostname, '/services/poll/', t.VID_TAXII_XML_10,
+            response = client.callTaxiiService2(hostname, '/poll/', t.VID_TAXII_XML_10,
                                             poll_msg.to_xml())
             taxii_msg = t.get_message_from_http_response(response, poll_msg.message_id)
             if response.getcode() != 200 or taxii_msg.message_type == tm.MSG_STATUS_MESSAGE:
@@ -162,8 +154,8 @@ def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
                                         taxii_msg.message)
             return ret
 
-   # print taxii_msg.to_xml(pretty_print=True)
-    valid = tm11.validate_xml(taxii_msg.to_xml())
+
+    valid = tm.validate_xml(taxii_msg.to_xml())
     if valid != True:
         ret['reason'] = "Invalid XML: %s" % valid
         return ret
@@ -180,30 +172,25 @@ def execute_taxii_agent(hostname=None, https=None, feed=None, keyfile=None,
 
     mid = taxii_msg.message_id
     for content_block in taxii_msg.content_blocks:
-        print "got a message from %s feed" % feed
         data = parse_content_block(content_block, keyfile, certfile)
         if not data:
             ret['failures'].append(('No data found in content block', 'Data'))
             continue
 
         objs = import_standards_doc(data, analyst, method, ref=mid,
-                                    make_event=create_events, source=feed)
-
-        dagger_handlers.set_value(feed,1)
+                                    make_event=create_events)
 
         for k in objs['imported']:
             ret['successes'] += 1
-            #ret[k[0]].append(k[1])
-        #for k in objs['failed']:
-            #ret['successes'] += 1 #temporary fix
-            #ret['failures'].append(k)
-    #ret['successes'] -= 1 #temp fix
+            ret[k[0]].append(k[1])
+        for k in objs['failed']:
+            ret['failures'].append(k)
+
 
     crits_taxii.save()
     return ret
 
 def parse_content_block(content_block, privkey=None, pubkey=None):
-
     if content_block.content_binding == 'application/x-pks7-mime':
         if not privkey and not pubkey:
             return None
@@ -220,15 +207,13 @@ def parse_content_block(content_block, privkey=None, pubkey=None):
         new_block = f.read()
         f.close()
         return parse_content_block(tm.ContentBlock.from_xml(new_block), privkey, pubkey)
-    #elif content_block.content_binding == t.CB_STIX_XML_111:
-    else:
+    elif content_block.content_binding == t.CB_STIX_XML_111:
         f = BytesIO(content_block.content)
         data = f.read()
         f.close()
         return data
-    #else:
-     #   print "hmf"
-      #  return None
+    else:
+        return None
 
 
 def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
@@ -263,13 +248,11 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
             a = Artifact(data, Artifact.TYPE_FILE) # create artifact w/data
             a.packaging.append(Base64Encoding())
             obje.add_related(a, "Child_Of") # relate artifact to file
-
         return ([obs], obj.releasability)
     elif type_ == 'Domain':
         obje = DomainName()
         obje.value = obj.domain
         obje.type_ = obj.record_type
-
         return ([Observable(obje)], obj.releasability)
     elif type_ == 'Email':
         if exclude == None:
@@ -309,10 +292,6 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
         if 'raw_header' not in exclude:
             obje.raw_header = obj.raw_header
 
-        #adding rest of email fields
-        obje.header.cc = EmailRecipients(obj.cc)
-        obje.header.to = EmailRecipients(obj.to)
-
         #copy fields where the names differ between objects
         if 'helo' not in exclude and 'email_server' not in exclude:
             obje.email_server = String(obj.helo)
@@ -325,26 +304,23 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
         obje.attachments = Attachments()
 
         observables.append(Observable(obje))
-
         return (observables, obj.releasability)
     elif type_ == 'Indicator':
         observables = []
         obje = make_cybox_object(obj.ind_type, obj.value)
         observables.append(Observable(obje))
-
         return (observables, obj.releasability)
     elif type_ == 'IP':
         obje = Address()
         obje.address_value = obj.ip
-        if obj.ip_type == IPTypes.IPV4_ADDRESS:
+        if obj.ip_type == IPTypes.IPv4_ADDRESS:
             obje.category = "ipv4-addr"
-        elif obj.ip_type == IPTypes.IPV6_ADDRESS:
+        elif obj.ip_type == IPTypes.IPv6_ADDRESS:
             obje.category = "ipv6-addr"
-        elif obj.ip_type == IPTypes.IPV4_SUBNET:
+        elif obj.ip_type == IPTypes.IPv4_SUBNET:
             obje.category = "ipv4-net"
-        elif obj.ip_type == IPTypes.IPV6_SUBNET:
+        elif obj.ip_type == IPTypes.IPv6_SUBNET:
             obje.category = "ipv6-subnet"
-
         return ([Observable(obje)], obj.releasability)
     elif type_ == 'PCAP':
         obje = File()
@@ -357,14 +333,12 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
         art = Artifact(obj.filedata.read(), Artifact.TYPE_NETWORK)
         art.packaging.append(Base64Encoding())
         obje.add_related(art, "Child_Of") # relate artifact to file
-
         return ([obs], obj.releasability)
     elif type_ == 'RawData':
         obje = Artifact(obj.data.encode('utf-8'), Artifact.TYPE_FILE)
         obje.packaging.append(Base64Encoding())
         obs = Observable(obje)
         obs.description = obj.description
-
         return ([obs], obj.releasability)
     elif type_ == 'Sample':
         if exclude == None:
@@ -372,7 +346,7 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
 
         observables = []
         f = File()
-        for attr in ['md5', 'sha1', 'sha256', 'source']:
+        for attr in ['md5', 'sha1', 'sha256']:
             if attr not in exclude:
                 val = getattr(obj, attr, None)
                 if val:
@@ -400,159 +374,10 @@ def to_cybox_observable(obj, exclude=None, bin_fmt="raw"):
             #   CybOX-binding friendly object (e.g., calling .to_dict() on
             #   the resulting CybOX object fails on this field.
             f.file_format = obj.filetype
-
-        f.extracted_features = ExtractedFeatures()
-        f.extracted_features.strings = ExtractedStrings()
-        for name in obj.filenames:
-            f.extracted_features.strings.append(ExtractedString(name))
-
         observables.append(Observable(f))
         return (observables, obj.releasability)
     else:
         return (None, None)
-
-def to_stix_campaign(obj, ref=True):
-
-    from stix.core import Campaign
-    #Taking the campaign TLO info and making it a campaign STIX object
-
-    campaign_list = []
-
-    if not ref:
-        myCamp = Campaign()
-        myCamp.title = obj.name
-        myCamp.description = obj.description
-        campaign_list.append(myCamp)
-
-    else:
-        for camp in obj.campaign:
-            myCamp = Campaign()
-            myCamp.short_description = camp.confidence
-            myCamp.timestamp = camp.date
-            myCamp.description = camp.description
-            myCamp.title = camp.name
-            campaign_list.append(myCamp)
-
-    return campaign_list
-
-def to_stix_information_source(obj):
-
-    from stix.common import InformationSource, Identity
-
-    mySource = InformationSource()
-
-    for item in obj.source:
-        for each in item.instances:
-            itemSource = InformationSource()
-            itemSource.time = Time(each.date)
-            itemSource.identity = Identity(name=item.name)
-            itemSource.add_description(each.reference)
-            itemSource.add_description(each.method)
-            mySource.add_contributing_source(itemSource)
-
-    return mySource
-
-def to_stix_kill_chains(obj):
-
-    import stix.common.kill_chains.lmco as lmco
-    myKill = []
-
-    for each in lmco.LMCO_KILL_CHAIN_PHASES:
-        if str(each.ordinality) + ". " + each.name in obj.kill_chain:
-            myKill.append(each)
-
-    return myKill
-
-def to_stix_tlp(obj):
-
-    from stix.data_marking import Marking, MarkingSpecification
-    from stix.extensions.marking.tlp import TLPMarkingStructure
-
-    marking_specification = MarkingSpecification()
-    marking_specification.controlled_structure = "//node() | //@*"
-
-    tlp = TLPMarkingStructure()
-    tlp.color = obj.tlp
-    marking_specification.marking_structures.append(tlp)
-
-    handling = Marking()
-    handling.add_marking(marking_specification)
-
-    return handling
-
-def get_indicator_type(type):
-
-    from stix.common.vocabs import IndicatorType
-    if type == 'Sample':
-        return IndicatorType.TERM_FILE_HASH_WATCHLIST
-    elif type == 'Email':
-        return IndicatorType.TERM_MALICIOUS_EMAIL
-    elif type == 'Domain':
-        return IndicatorType.TERM_DOMAIN_WATCHLIST
-    elif type == 'IP':
-        return IndicatorType.TERM_IP_WATCHLIST
-    elif type == 'Campaign':
-        return IndicatorType.TERM_ANONYMIZATION
-
-def to_stix_relationship(obj):
-    from stix.indicator import Indicator
-
-    ind_rel = []
-
-    for relationship in obj.relationships:
-        #if not relationship.private: #testing
-        ind = Indicator()
-        ind.title = "MARTI Relation"
-        ind.timestamp = relationship.relationship_date
-        ind.confidence = relationship.rel_confidence.title()
-        ind.id_ = relationship.url_key
-        ind.add_indicator_type(get_indicator_type(relationship.rel_type))
-        ind.description = relationship.rel_reason
-        ind.short_description = relationship.relationship
-        ind_rel.append(ind)
-
-    return ind_rel
-
-def to_stix_sightings(obj):
-    from stix.indicator.sightings import Sighting
-    from stix.common import InformationSource, Identity
-
-    mySighting = Sighting()
-    mySighting.source = InformationSource()
-
-    if obj.sightings.sighting:
-        itemSighting = InformationSource()
-        itemSighting.time = Time(obj.sightings.date)
-        itemSighting.identity = Identity(name=settings.COMPANY_NAME)
-        mySighting.source.add_contributing_source(itemSighting)
-
-    for each in obj.sightings.instances:
-        itemSighting = InformationSource()
-        itemSighting.time = Time(each.date)
-        itemSighting.identity = Identity(name=each.name)
-        mySighting.source.add_contributing_source(itemSighting)
-
-    return mySighting
-
-def to_stix_comments(obj):
-    from crits.comments.handlers import get_comments
-    from stix.indicator import Indicator as S_Ind
-
-    comments = get_comments(obj.id, obj._meta['crits_type'], False)
-    ind_comments = []
-
-    for each in comments:
-        if not each.private:
-            ind = S_Ind()
-            ind.title = "CRITs Comment(s)"
-            ind.description = each.comment
-            ind.short_description = each.url_key
-            ind.producer = to_stix_information_source(each)
-            ind.timestamp = each.edit_date #should be date, but for some reason, it's not getting the correct value
-
-            ind_comments.append(ind)
-
-    return ind_comments
 
 def to_stix_indicator(obj):
     """
@@ -619,7 +444,7 @@ def has_cybox_repr(obj):
     except:
         return False
 
-def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
+def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw"):
     """
     Converts a CRITs object to a STIX document.
 
@@ -647,16 +472,17 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
     from stix.common import StructuredText, InformationSource
     from stix.core import STIXPackage, STIXHeader
     from stix.common.identity import Identity
-    import stix.common.kill_chains.lmco as lmco
 
     # These lists are used to determine which CRITs objects
     # go in which part of the STIX document.
     ind_list = ['Indicator']
-    obs_list = ['Domain',
+    obs_list = ['Certificate',
+                'Domain',
                 'Email',
                 'IP',
+                'PCAP',
+                'RawData',
                 'Sample']
-    camp_list = ['Campaign']
     actor_list = ['Actor']
 
     # Store message
@@ -692,8 +518,6 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
 
     relationships = {}
     stix = []
-    stx = False
-    tlp = None
     from stix.indicator import Indicator as S_Ind
     for obj in items_to_convert:
         obj_type = obj._meta['crits_type']
@@ -704,15 +528,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
             stx, releas = to_stix_indicator(obj)
             stix_msg['stix_indicators'].append(stx)
             refObjs[obj.id] = S_Ind(idref=stx.id_)
-        elif obj_type in camp_list:
-            camp = to_stix_campaign(obj, False)
         elif obj_type in obs_list: # convert to CybOX observable
-            camp = to_stix_campaign(obj)
-            comm =  to_stix_comments(obj)
-            rel = to_stix_relationship(obj)
-            sight = to_stix_sightings(obj)
-            kill = to_stix_kill_chains(obj)
-            tlp = to_stix_tlp(obj)
             if obj_type == class_from_type('Sample')._meta['crits_type']:
                 stx, releas = to_cybox_observable(obj, bin_fmt=bin_fmt)
             else:
@@ -722,15 +538,6 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
             ind = S_Ind()
             for ob in stx:
                 ind.add_observable(ob)
-                ind.sightings.append(sight)
-                for each in camp:
-                    ind.add_related_campaign(each)
-                for each in comm:
-                    ind.add_related_indicator(each)
-                for each in rel:
-                    ind.add_related_indicator(each)
-                for each in kill:
-                    ind.add_kill_chain_phase(each)
             ind.title = "CRITs %s Top-Level Object" % obj_type
             ind.description = ("This is simply a CRITs %s top-level "
                                 "object, not actually an Indicator. "
@@ -738,8 +545,6 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
                                 " to facilitate documentation of the "
                                 "relationship." % obj_type)
             ind.confidence = 'None'
-            ind.producer = to_stix_information_source(obj)
-            ind.short_descriptions = obj.sectors
             stx = ind
             stix_msg['stix_indicators'].append(stx)
             refObjs[obj.id] = S_Ind(idref=stx.id_)
@@ -756,8 +561,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
                                                             rel.rel_type)
 
         stix_msg['final_objects'].append(obj)
-        if stx:
-            stix.append(stx)
+        stix.append(stx)
 
     # set relationships on STIX objects
     for stix_obj in stix:
@@ -795,24 +599,17 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
     header = STIXHeader(information_source=i_s,
                         description=StructuredText(value=stix_desc),
                         package_intents=[stix_int],
-                        title=stix_title,
-                        handling=tlp)
-
-    if not ref_id:
-        ref_id = uuid.uuid4()
+                        title=stix_title)
 
     stix_msg['stix_obj'] = STIXPackage(incidents=stix_msg['stix_incidents'],
                     indicators=stix_msg['stix_indicators'],
                     threat_actors=stix_msg['stix_actors'],
                     stix_header=header,
-                    campaigns=camp,
-                    id_=ref_id)
-
-    #print stix_msg['stix_obj'].to_xml()
+                    id_=uuid.uuid4())
 
     return stix_msg
 
-def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirmed=False, ref_id=None):
+def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirmed=False):
     """
     :param analyst The analyst triggering this TAXII service call
     :param obj The context object being shared
@@ -821,7 +618,6 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
     :param relation_choices The list of items related to OBJ that have been chosen for sharing
     :param confirmed True if user has accepted & approved releasability updates
     """
-
     ret = {
             'success': False, # tells client whether any message was sent successfully
             'rcpts': [], # list of sources the message was sent
@@ -853,10 +649,10 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
     # collect the list of destination data feeds for the message
     destination_feeds = []
     for crtfile in certfiles:
-        (source, feed, polling, inbox) = crtfile.split(',')
+        (source, feed, filepath) = crtfile.split(',')
         src = source.strip()
         if src in rcpts:
-            destination_feeds.append((src, feed.strip()))
+            destination_feeds.append((src, feed.strip(), filepath.strip()))
 
     if not destination_feeds or len(destination_feeds) != len(rcpts):
         # TAXII form ensures that this shouldn't happen, but just in case...
@@ -872,7 +668,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
     # each/any recipient feed successfully.
 
     # Convert object and chosen related items to STIX/CybOX
-    stix_msg = to_stix(obj, relation_choices, bin_fmt="base64", ref_id=ref_id)
+    stix_msg = to_stix(obj, relation_choices, bin_fmt="base64")
     stix_doc = stix_msg['stix_obj']
 
     # if doing a preview of content, return content now
@@ -880,7 +676,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
         ret['preview'] = stix_doc.to_xml()
         return ret
     elif not confirmed: # if user has not accepted responsibility for releasability
-        release = verify_releasability(rcpts, stix_msg['final_objects'], analyst, False, str(stix_doc.id_))
+        release = verify_releasability(rcpts, stix_msg['final_objects'], analyst, False)
         if release: # if releasability needs to change
             ret['release_changes'] = release
             return ret # make user confirm changes, instead of sending messages
@@ -889,6 +685,8 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
     if not resolve_taxii_server(hostname):
         ret['reason'] = "Cannot contact TAXII Server at: %s" % hostname
         return ret
+
+    print "POOP"
 
     client = tc.HttpClient()
     if https:
@@ -900,19 +698,24 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
         proxy = settings.HTTP_PROXY
         if not proxy.startswith('http://'):
             proxy = 'http://' + proxy
-        client.setProxy(proxy)
+        client.setProxy(proxy, proxy_type=tc.HttpClient.PROXY_HTTPS)
 
     # generate and send inbox messages
     # one message per feed, with appropriate TargetFeed header specified
     # Store each TAXII message in a list.
     for feed in destination_feeds:
         rcpt = feed[0]
-
+        # Create encrypted block
+        encrypted_block = encrypt_block(
+            tm.ContentBlock(
+                content_binding = t.CB_STIX_XML_111,
+                content = stix_doc.to_xml()).to_xml(),
+            feed[2])
         # Try TAXII 1.1 first:
         try_10 = False
         current_status_type = None
         failed = True
-        result = gen_send(tm11, client, stix_doc, hostname,
+        result = gen_send(tm11, client, encrypted_block, hostname,
                           t.VID_TAXII_XML_11,
                           dcn = [feed[1]],
                           url = "/services/inbox/")
@@ -930,10 +733,10 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
 
         # Try TAXII 1.0 since 1.1 seems to have failed.
         if try_10:
-            result = gen_send(tm, client, stix_doc, hostname,
+            result = gen_send(tm, client, encrypted_block, hostname,
                             t.VID_TAXII_XML_10,
                             eh = {'TargetFeed': feed[1]},
-                            url = "/services/inbox/")
+                            url = "/inbox/")
             if len(result) == 2:
                 res = result[1]
                 if res.status_type == tm11.ST_SUCCESS:
@@ -950,13 +753,13 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
             ret['failed_rcpts'].append((rcpt, current_status_type))
 
     if ret['rcpts']: # update releasability for successful TAXII messages
-        verify_releasability(ret['rcpts'], stix_msg['final_objects'], analyst, True, str(stix_doc.id_))
+        verify_releasability(ret['rcpts'], stix_msg['final_objects'], analyst, True)
 
     ret['success'] = True
     return ret
 
 def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
-             url="/services/inbox/"):
+             url="/inbox/"):
     """
     Generate and send a TAXII message.
 
@@ -981,14 +784,9 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
 
     # Wrap encrypted block in content block
     content_block = tm_.ContentBlock(
-                content_binding = t.CB_STIX_XML_111,
-                content = encrypted_block.to_xml())
-
-#tm_.ContentBlock(
-        #content_binding = "application/x-pks7-mime",
-        #content = encrypted_block
-    #)
-
+        content_binding = "application/x-pks7-mime",
+        content = encrypted_block
+    )
     # Create inbox message
     if dcn:
         inbox_message = tm_.InboxMessage(
@@ -1008,31 +806,20 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
 
     # send inbox message via TAXII service
     try:
-#        print "trying to send to taxii"
-       # response = client.callTaxiiService2(
-        #    hostname,
-         #   url,
-          #  t_xml,
-           # inbox_message.to_xml()
-        #)
-        #print "message sent..."
-        #print response
-        #taxii_message = t.get_message_from_http_response(response,
-                              #                           inbox_message.message_id)
-        
-        response = client.call_taxii_service2(hostname, '/services/inbox/', VID_TAXII_XML_11, inbox_message.to_xml(pretty_print=True))
-        taxii_message = t.get_message_from_http_response(response, inbox_message.message_id)
-        print "Message sent..."
-#        print taxii_message.to_xml(pretty_print=True)
-        #print response
-
+        response = client.callTaxiiService2(
+            hostname,
+            url,
+            t_xml,
+            inbox_message.to_xml()
+        )
+        taxii_message = t.get_message_from_http_response(response,
+                                                         inbox_message.message_id)
         return (response, taxii_message)
     # can happen if 'hostname' is reachable, but is not a TAXII server, etc
     except Exception, e:
-        print e
         return (e)
 
-def verify_releasability(rcpts, items, analyst, update=False, stix_id=None):
+def verify_releasability(rcpts, items, analyst, update=False):
     """
     Given the list of items being sent to a list of recipients via TAXII,
     determine what releasability changes (if any) are necessary for the
@@ -1045,7 +832,7 @@ def verify_releasability(rcpts, items, analyst, update=False, stix_id=None):
     :return Dict mapping item to list of necessary releasability additions
     """
     date = datetime.now() # timestamp to use for updates, if updating
-    releaseable = Releasability.ReleaseInstance(analyst=analyst, date=date, reference=stix_id)
+    releaseable = Releasability.ReleaseInstance(analyst=analyst, date=date)
     changes = []
     for item in items: # for each item
         updates = [] # track sources that need releasability update
@@ -1075,6 +862,7 @@ def resolve_taxii_server(hostname):
 
     :return 1 if server was reachable, 0 otherwise.
     """
+    return 1
     try:
         socket.gethostbyname(hostname)
         return 1
