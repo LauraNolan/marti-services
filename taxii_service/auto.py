@@ -1,5 +1,5 @@
 import threading
-from crits.services.handlers import get_config
+from crits.services.handlers import get_config, update_config
 import time
 from . import handlers
 from . import taxii
@@ -26,13 +26,17 @@ class TaxiiAgentPolling(threading.Thread):
             sc = get_config('taxii_service')
             certfiles = sc['certfiles']
 
-            if sc['auto_polling']:
+            if 'active' in sc:
 
-               for crtfile in certfiles:
-                   (source, feed, polling, inbox) = crtfile.split(',')
-                   src = source.strip()
-                   if polling in 'true':
-                       handlers.execute_taxii_agent(analyst="taxii", method="TAXII Agent Web",feed=src)
+                if sc['active']:
+
+                    if sc['auto_polling']:
+
+                       for crtfile in certfiles:
+                           (source, feed, polling, inbox) = crtfile.split(',')
+                           src = source.strip()
+                           if polling in 'true':
+                               handlers.execute_taxii_agent(analyst="taxii", method="TAXII Agent Web",feed=src)
 
             time.sleep(int(sc['polling_time']))
 
@@ -41,8 +45,22 @@ polling_thread = TaxiiAgentPolling()
 def start_polling():
     global polling_thread
 
-    if not polling_thread.isAlive():
-        polling_thread.start()
+    # Get config and grab some stuff we need.
+    sc = get_config('taxii_service')
+    sc = sc.to_dict()
+
+    if 'thread' in sc:
+        if not sc['thread']:
+            sc['thread'] = True
+            update_config('taxii_service', sc, 'taxii')
+
+            if not polling_thread.isAlive():
+                polling_thread.start()
+
+            start_inbox()
+        else:
+            sc['thread'] = False
+            update_config('taxii_service', sc, 'taxii')
 
 
 
@@ -66,62 +84,66 @@ class TaxiiAgentInbox(threading.Thread):
                    if inbox in 'true':
                         feeds.append(source)
 
-            if sc['auto_inbox']:
+            if 'active' in sc:
 
-                # Last document's end time is our start time.
-                last = taxii.Taxii.get_last(feed)
-                if last:
-                    start = pytz.utc.localize(last.end)
+                if sc['active']:
 
-                # If start is a string, convert it to a datetime
-                # YYYY-MM-DD HH:MM:SS
-                if isinstance(start, str):
-                    start = pytz.utc.localize(parse(start, fuzzy=True))
+                    if sc['auto_inbox']:
 
-                # store the current time as the time of this request
-                runtime = datetime.now(tzutc()) - timedelta(hours=5)
+                        # Last document's end time is our start time.
+                        last = taxii.Taxii.get_last(feed)
+                        if last:
+                            start = pytz.utc.localize(last.end)
 
-                end = runtime
+                        # If start is a string, convert it to a datetime
+                        # YYYY-MM-DD HH:MM:SS
+                        if isinstance(start, str):
+                            start = pytz.utc.localize(parse(start, fuzzy=True))
 
-                # If end is a string, convert it to a datetime
-                # YYYY-MM-DD HH:MM:SS
-                if isinstance(end, str):
-                    end = pytz.utc.localize(parse(end, fuzzy=True))
+                        # store the current time as the time of this request
+                        runtime = datetime.now(tzutc()) - timedelta(hours=5)
 
-                crits_taxii = taxii.Taxii()
-                crits_taxii.runtime = runtime
-                crits_taxii.end = end
-                crits_taxii.feed = feed
+                        end = runtime
 
-                TLO = []
-                TLO.append([{'items': mongo_find('domains', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Domain'}])
-                TLO.append([{'items': mongo_find('email', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Email'}])
-                TLO.append([{'items': mongo_find('ips', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'IP'}])
-                TLO.append([{'items': mongo_find('campaigns', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Campaign'}])
-                TLO.append([{'items': mongo_find('sample', {'modified': {'$gt': start}}, sort=[('modified',-1)])},{'collection' : 'Sample'}])
-                #Other TLOs that TAXII will send without error: pcaps/PCAP, raw_data/RawData, certificates/Certificate
+                        # If end is a string, convert it to a datetime
+                        # YYYY-MM-DD HH:MM:SS
+                        if isinstance(end, str):
+                            end = pytz.utc.localize(parse(end, fuzzy=True))
 
-                for samples in TLO:
-                    for doc in samples[0]['items']:
-                        release_list = []
-                        release_id = None
+                        crits_taxii = taxii.Taxii()
+                        crits_taxii.runtime = runtime
+                        crits_taxii.end = end
+                        crits_taxii.feed = feed
 
-                        obj_item = class_from_id(samples[1]['collection'], doc['_id'])
+                        TLO = []
+                        TLO.append([{'items': mongo_find('domains', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Domain'}])
+                        TLO.append([{'items': mongo_find('email', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Email'}])
+                        TLO.append([{'items': mongo_find('ips', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'IP'}])
+                        TLO.append([{'items': mongo_find('campaigns', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Campaign'}])
+                        TLO.append([{'items': mongo_find('sample', {'modified': {'$gt': start}}, sort=[('modified',-1)])},{'collection' : 'Sample'}])
+                        #Other TLOs that TAXII will send without error: pcaps/PCAP, raw_data/RawData, certificates/Certificate
 
-                        if 'releasability' in doc:
-                            for release in doc['releasability']:
-                                if release['name'] in feeds:
-                                    if 'release' in release:
-                                        if release['release']:
-                                            release_list.append(release['name'])
-                                            if 'reference_id' in release:
-                                                release_id = release['reference_id']
+                        for samples in TLO:
+                            for doc in samples[0]['items']:
+                                release_list = []
+                                release_id = None
 
-                        if release_list != []:
-                            data = handlers.run_taxii_service("taxii", obj_item, release_list, preview=False,confirmed=True, ref_id=release_id)
-                            print doc['_id'], " : ", data
+                                obj_item = class_from_id(samples[1]['collection'], doc['_id'])
 
-                crits_taxii.save()
+                                if 'releasability' in doc:
+                                    for release in doc['releasability']:
+                                        if release['name'] in feeds:
+                                            if 'release' in release:
+                                                if release['release']:
+                                                    release_list.append(release['name'])
+                                                    if 'reference_id' in release:
+                                                        release_id = release['reference_id']
+
+                                if release_list != []:
+                                    data = handlers.run_taxii_service("taxii", obj_item, release_list, preview=False,confirmed=True, ref_id=release_id)
+                                    print doc['_id'], " : ", data
+
+                        crits_taxii.save()
 
             time.sleep(int(sc['inbox_time']))
 
