@@ -222,13 +222,13 @@ class STIXParser():
 
     def parse_ttps(self,indicators):
 
+        from crits.campaigns.handlers import merge_ttp
+
         for indicator in indicators:
             if self.was_saved(indicator):
-                print 'ttp'
                 for ttp in indicator.indicated_ttps:
-                    print 'ugh: ', ttp.timestamp
-                    print 'woo: ', ttp.description
-
+                    merge_ttp(self.imported[indicator.id_][1].id, str(ttp.item.description),
+                              'taxii', ttp.item.timestamp)
 
     def parse_campaigns(self, indicators, campaigns):
 
@@ -254,16 +254,29 @@ class STIXParser():
                                          str(self.imported[indicator.id_][1].id))
         return
 
+    def parse_aliases(self, indicators):
+
+        from crits.campaign.handlers import modify_campaign_aliases
+
+        for indicator in indicators:
+            if self.was_saved(indicator):
+                aliases_list = []
+                for sector in indicator.descriptions:
+                    aliases_list.append(str(sector))
+                modify_campaign_aliases(str(self.imported[indicator.id_][0]),
+                                   str(self.imported[indicator.id_][1].id),
+                                   sector_list, 'taxii')
+        return
+
     def parse_sectors(self, indicators):
 
         for indicator in indicators:
             if self.was_saved(indicator):
+                obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
                 sector_list = []
                 for sector in indicator.short_descriptions:
                     sector_list.append(str(sector))
-                modify_sector_list(str(self.imported[indicator.id_][0]),
-                                   str(self.imported[indicator.id_][1].id),
-                                   sector_list, 'taxii')
+                modify_sector_list(obj.get_url_key(), sector_list, 'taxii', True)
         return
 
     def parse_kill_chain(self, indicators):

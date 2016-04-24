@@ -738,6 +738,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
                 ind.add_indicated_ttp(each)
 
             ind.short_descriptions = obj.sectors
+            ind.descriptions = obj.aliases
 
             stx = ind
             stix_msg['stix_indicators'].append(stx)
