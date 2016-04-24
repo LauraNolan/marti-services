@@ -260,23 +260,24 @@ class STIXParser():
 
         for indicator in indicators:
             if self.was_saved(indicator):
+                obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
                 aliases_list = []
                 for sector in indicator.descriptions:
                     aliases_list.append(str(sector))
-                modify_campaign_aliases(str(self.imported[indicator.id_][0]),
-                                   str(self.imported[indicator.id_][1].id),
-                                   sector_list, 'taxii')
+                modify_campaign_aliases(obj.get_url_key(), aliases_list, 'taxii', True)
+
         return
 
     def parse_sectors(self, indicators):
 
         for indicator in indicators:
             if self.was_saved(indicator):
-                obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
                 sector_list = []
                 for sector in indicator.short_descriptions:
                     sector_list.append(str(sector))
-                modify_sector_list(obj.get_url_key(), sector_list, 'taxii', True)
+                modify_sector_list(str(self.imported[indicator.id_][0]),
+                                   str(self.imported[indicator.id_][1].id),
+                                   sector_list, 'taxii')
         return
 
     def parse_kill_chain(self, indicators):
