@@ -702,6 +702,9 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
             refObjs[obj.id] = S_Ind(idref=stx.id_)
         elif obj_type in camp_list:
             camp = to_stix_campaign(obj, False)
+            comm = to_stix_comments(obj)
+            for each in comm:
+                camp.add_related_indicator(each)
         elif obj_type in obs_list: # convert to CybOX observable
             camp = to_stix_campaign(obj)
             comm =  to_stix_comments(obj)
