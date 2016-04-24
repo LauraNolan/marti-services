@@ -1036,8 +1036,6 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
 
 def reset_releasebility_flag(items):
 
-    print 'inside my reset function'
-
     for item in items:
         item.set_releasability_flag(flag=False)
         item.save(username='taxii')
