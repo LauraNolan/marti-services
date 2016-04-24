@@ -35,6 +35,24 @@ def gather_relationships(obj_type, obj_id, user, depth, types):
         'Sample': 'md5',
         'Target': 'email_address'
     }
+    url_dict = {
+        'Actor': 'name',
+        'Backdoor': 'name',
+        'Campaign': 'name',
+        'Certificate': 'md5',
+        'Comment': 'object_id',
+        'Domain': 'domain',
+        'Email': 'message_id',
+        'Event': 'title',
+        'Exploit': 'name',
+        'Indicator': 'value',
+        'IP': 'ip',
+        'PCAP': 'md5',
+        'RawData': 'title',
+        'Sample': 'md5',
+        'Target': 'email_address'
+    }
+
 
     # Define the styles for each of the data types. Absent these, the vis.js library will
     # auto-select sensible defaults
@@ -239,7 +257,7 @@ def gather_relationships(obj_type, obj_id, user, depth, types):
                 value += " (family)"
             else:
                 value += " (v:%s)" % obj.version
-        href = reverse('crits.core.views.details', args=(obj_type, obj_id))
+        href = reverse('crits.core.views.details', args=(obj_type, getattr(obj, url_dict[obj_type], '')))
 
         if len(types) != 0 and obj_type not in types:
             continue
