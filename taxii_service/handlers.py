@@ -703,6 +703,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
         elif obj_type in camp_list:
             camp = to_stix_campaign(obj, False)
             comm = to_stix_comments(obj)
+            tlp = to_stix_tlp(obj)
 
             ind = S_Ind()
             ind.title = "MARTI Campaign"

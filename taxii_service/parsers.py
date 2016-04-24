@@ -220,7 +220,7 @@ class STIXParser():
                                        'taxii', feed, self.package.id_)
         return
 
-    def parse_campaigns(self, campaigns, indicators):
+    def parse_campaigns(self, indicators, campaigns):
 
         for campaign in campaigns:
             res = add_campaign(str(campaign.title), str(campaign.description),
@@ -279,6 +279,11 @@ class STIXParser():
 
         from crits.core.handlers import set_tlp
         from stix.extensions.marking.tlp import TLPMarkingStructure
+
+        if 'handling' not in header:
+            print '1'
+            if 'markings' not in header.handling:
+                print '2'
 
         for marking in header.handling.markings:
             for each in marking.marking_structures:
