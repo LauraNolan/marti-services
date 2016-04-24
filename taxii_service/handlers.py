@@ -704,12 +704,25 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
             camp = to_stix_campaign(obj, False)
             comm = to_stix_comments(obj)
             tlp = to_stix_tlp(obj)
+            rel = to_stix_relationship(obj)
+            sight = to_stix_sightings(obj)
+            kill = to_stix_kill_chains(obj)
 
             ind = S_Ind()
             ind.title = "MARTI Campaign"
 
+            ind.sightings.append(sight)
+            for each in camp:
+                ind.add_related_campaign(each)
             for each in comm:
                 ind.add_related_indicator(each)
+            for each in rel:
+                ind.add_related_indicator(each)
+            for each in kill:
+                ind.add_kill_chain_phase(each)
+
+            ind.producer = to_stix_information_source(obj)
+            ind.short_descriptions = obj.sectors
 
             stx = ind
             stix_msg['stix_indicators'].append(stx)

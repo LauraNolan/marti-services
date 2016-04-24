@@ -189,21 +189,26 @@ class STIXParser():
                                     ""))
 
         if self.package.indicators:
-            self.parse_indicators(self.package.indicators)
+            res = self.parse_indicators(self.package.indicators)
+            if res == False:
+                self.parse_campaigns(self.package.indicators, self.package.campaigns)
             self.parse_comments(self.package.indicators)
+            print '3'
             self.parse_relationship(self.package.indicators)
+            print '4'
             self.parse_sources(self.package.indicators)
+            print '5'
             self.parse_sectors(self.package.indicators)
+            print '6'
             self.parse_sightings(self.package.indicators)
+            print '7'
             self.parse_kill_chain(self.package.indicators)
+            print '8'
             if self.package.campaigns:
                 self.parse_related_campaigns(self.package.indicators, self.package.campaigns)
             if self.package.stix_header:
                 self.parse_tlp(self.package.indicators, self.package.stix_header)
             self.set_releasability(self.package.indicators, source)
-        elif self.package.campaigns:
-            self.parse_campaigns(self.package.campaigns)
-            self.parse_comments(self.package.indicators)
 
         if self.package.observables and self.package.observables.observables:
             self.parse_observables(self.package.observables.observables)
@@ -226,8 +231,8 @@ class STIXParser():
             res = add_campaign(str(campaign.title), str(campaign.description),
                          None, 'taxii')
 
-            if res['success']:
-                self.imported[indicators[0].id_] = {'Campaign', class_from_id('Campaign'), res['id']}
+            if 'id' in res:
+                self.imported[indicators[0].id_] = ('Campaign', class_from_id('Campaign', res['id']))
 
         return
 
@@ -279,11 +284,6 @@ class STIXParser():
 
         from crits.core.handlers import set_tlp
         from stix.extensions.marking.tlp import TLPMarkingStructure
-
-        if 'handling' not in header:
-            print '1'
-            if 'markings' not in header.handling:
-                print '2'
 
         for marking in header.handling.markings:
             for each in marking.marking_structures:
@@ -484,6 +484,8 @@ class STIXParser():
                     if result:
                         self.imported[indicator.id_] = result
                     continue
+                elif "MARTI Campaign" in indicator.title:
+                    return False
 
             for observable in indicator.observables: # get each observable from indicator (expecting only 1)
                 if not observable.object_ or not observable.object_.properties:
