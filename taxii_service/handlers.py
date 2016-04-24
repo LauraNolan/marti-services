@@ -721,7 +721,6 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
             for each in kill:
                 ind.add_kill_chain_phase(each)
 
-            ind.producer = to_stix_information_source(obj)
             ind.short_descriptions = obj.sectors
 
             stx = ind
