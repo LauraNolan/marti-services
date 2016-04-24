@@ -193,6 +193,7 @@ class STIXParser():
             if res == False:
                 self.parse_campaigns(self.package.indicators, self.package.campaigns)
                 self.parse_ttps(self.package.indicators)
+                self.parse_aliases(self.package.indicators)
             self.parse_comments(self.package.indicators)
             self.parse_relationship(self.package.indicators)
             self.parse_sources(self.package.indicators)
@@ -256,7 +257,7 @@ class STIXParser():
 
     def parse_aliases(self, indicators):
 
-        from crits.campaign.handlers import modify_campaign_aliases
+        from crits.campaigns.handlers import modify_campaign_aliases
 
         for indicator in indicators:
             if self.was_saved(indicator):
