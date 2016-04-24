@@ -532,8 +532,7 @@ def to_stix_sightings(obj):
 
 def to_stix_comments(obj):
     from crits.comments.handlers import get_comments
-    #from stix.indicator import Indicator as S_Ind
-    from stix.incident import Incident as S_Ind
+    from stix.indicator import Indicator as S_Ind
 
     comments = get_comments(obj.id, obj._meta['crits_type'], False)
     ind_comments = []
@@ -704,8 +703,16 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
         elif obj_type in camp_list:
             camp = to_stix_campaign(obj, False)
             comm = to_stix_comments(obj)
+
+            ind = S_Ind()
+            ind.title = "MARTI Campaign"
+
             for each in comm:
-                camp[0].add_related_incident(each)
+                ind.add_related_indicator(each)
+
+            stx = ind
+            stix_msg['stix_indicators'].append(stx)
+            refObjs[obj.id] = S_Ind(idref=stx.id_)
         elif obj_type in obs_list: # convert to CybOX observable
             camp = to_stix_campaign(obj)
             comm =  to_stix_comments(obj)
