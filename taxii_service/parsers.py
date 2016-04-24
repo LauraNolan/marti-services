@@ -203,7 +203,7 @@ class STIXParser():
             self.set_releasability(self.package.indicators, source)
         elif self.package.campaigns:
             self.parse_campaigns(self.package.campaigns)
-            self.parse_comments(self.package.campaigns)
+            self.parse_comments(self.package.indicators)
 
         if self.package.observables and self.package.observables.observables:
             self.parse_observables(self.package.observables.observables)
@@ -220,13 +220,14 @@ class STIXParser():
                                        'taxii', feed, self.package.id_)
         return
 
-    def parse_campaigns(self, campaigns):
+    def parse_campaigns(self, campaigns, indicators):
+
         for campaign in campaigns:
             res = add_campaign(str(campaign.title), str(campaign.description),
                          None, 'taxii')
 
             if res['success']:
-                self.imported[campaign.id_] = {'Campaign', class_from_id('Campaign'), res['id']}
+                self.imported[indicators[0].id_] = {'Campaign', class_from_id('Campaign'), res['id']}
 
         return
 
