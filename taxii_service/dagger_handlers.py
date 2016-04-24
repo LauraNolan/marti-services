@@ -26,7 +26,6 @@ def set_value(marti_name,dagger_value):
 
     item = dagger_item.get_item(marti_name)
     if not item:
-        print 'not here'
         return False
 
     item.dagger_value = dagger_value + item.decay
@@ -40,7 +39,6 @@ def decay_value(marti_name):
 
     item = dagger_item.get_item(marti_name)
     if not item:
-        print 'item not here'
         return False
 
     set_value(marti_name,(item.dagger_value-item.decay))

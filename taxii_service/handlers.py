@@ -915,13 +915,20 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
         if len(result) == 2:
             res = result[1]
             if res.status_type == tm11.ST_SUCCESS:
+                print "Message sent..."
                 failed = False
                 ret['rcpts'].append(rcpt)
             else:
-                try_10 = True
+                #try_10 = True
                 current_status_type = "<br>tm11: " + res.status_type
+                ####ERROR HANDLING####
+                print "Message not sent..."
+                print "Result: ", res.to_xml()
+                print "STIX Message: ", stix_doc.to_xml()
+                reset_releasebility_flag(stix_msg['final_objects'])
+                ####END ERROR HANDLING####
         else:
-            try_10 = True
+            #try_10 = True
             current_status_type = "<br>tm11: " + result[0]
 
         # Try TAXII 1.0 since 1.1 seems to have failed.
@@ -1018,8 +1025,7 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
         
         response = client.call_taxii_service2(hostname, '/services/inbox/', VID_TAXII_XML_11, inbox_message.to_xml(pretty_print=True))
         taxii_message = t.get_message_from_http_response(response, inbox_message.message_id)
-        print "Message sent..."
-#        print taxii_message.to_xml(pretty_print=True)
+        #print taxii_message.to_xml(pretty_print=True)
         #print response
 
         return (response, taxii_message)
@@ -1027,6 +1033,14 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
     except Exception, e:
         print e
         return (e)
+
+def reset_releasebility_flag(items):
+
+    print 'inside my reset function'
+
+    for item in items:
+        item.set_releasability_flag(flag=False)
+        item.save(username='taxii')
 
 def verify_releasability(rcpts, items, analyst, update=False, stix_id=None):
     """
