@@ -530,6 +530,19 @@ def to_stix_sightings(obj):
 
     return mySighting
 
+def to_stix_ttps(obj):
+    from stix.ttp import TTP
+
+    ttp_list = []
+
+    for each in obj.ttps:
+        ttp = TTP()
+        ttp.timestamp = each.date
+        ttp.description = each.ttp
+        ttp_list.append(ttp)
+
+    return ttp_list
+
 def to_stix_comments(obj):
     from crits.comments.handlers import get_comments
     from stix.indicator import Indicator as S_Ind
@@ -707,6 +720,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
             rel = to_stix_relationship(obj)
             sight = to_stix_sightings(obj)
             kill = to_stix_kill_chains(obj)
+            ttp = to_stix_ttps(obj)
 
             ind = S_Ind()
             ind.title = "MARTI Campaign"
@@ -720,6 +734,8 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
                 ind.add_related_indicator(each)
             for each in kill:
                 ind.add_kill_chain_phase(each)
+            for each in ttp:
+                ind.add_indicated_ttp(each)
 
             ind.short_descriptions = obj.sectors
 

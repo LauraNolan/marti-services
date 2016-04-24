@@ -192,18 +192,13 @@ class STIXParser():
             res = self.parse_indicators(self.package.indicators)
             if res == False:
                 self.parse_campaigns(self.package.indicators, self.package.campaigns)
+                self.parse_ttps(self.package.indicators)
             self.parse_comments(self.package.indicators)
-            print '3'
             self.parse_relationship(self.package.indicators)
-            print '4'
             self.parse_sources(self.package.indicators)
-            print '5'
             self.parse_sectors(self.package.indicators)
-            print '6'
             self.parse_sightings(self.package.indicators)
-            print '7'
             self.parse_kill_chain(self.package.indicators)
-            print '8'
             if self.package.campaigns:
                 self.parse_related_campaigns(self.package.indicators, self.package.campaigns)
             if self.package.stix_header:
@@ -224,6 +219,16 @@ class STIXParser():
                                        str(self.imported[indicator.id_][1].id),
                                        'taxii', feed, self.package.id_)
         return
+
+    def parse_ttps(self,indicators):
+
+        for indicator in indicators:
+            if self.was_saved(indicator):
+                print 'ttp'
+                for ttp in indicator.indicated_ttps:
+                    print 'ugh: ', ttp.timestamp
+                    print 'woo: ', ttp.description
+
 
     def parse_campaigns(self, indicators, campaigns):
 
@@ -319,16 +324,18 @@ class STIXParser():
 
                 obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
 
-                for item in indicator.producer.contributing_sources:
-                    obj.add_source(source=str(item.identity.name),
-                        method=str(item.descriptions.__getitem__(2)),
-                        reference=str(item.descriptions.__getitem__(1)),
-                        date=item.time.start_time.value,
-                        analyst='taxii')
+                if 'Campaign' not in str(self.imported[indicator.id_][0]):
 
-                obj.save(username='taxii')
-                obj.reload()
-                obj.sanitize_sources(username='taxii')
+                    for item in indicator.producer.contributing_sources:
+                        obj.add_source(source=str(item.identity.name),
+                            method=str(item.descriptions.__getitem__(2)),
+                            reference=str(item.descriptions.__getitem__(1)),
+                            date=item.time.start_time.value,
+                            analyst='taxii')
+
+                    obj.save(username='taxii')
+                    obj.reload()
+                    obj.sanitize_sources(username='taxii')
 
     def was_saved(self, indicator):
         if indicator.id_ in self.imported:
