@@ -194,7 +194,8 @@ def gather_relationships(obj_type, obj_id, user, depth, types):
 
         depth -= 1
         for r in obj.relationships:
-            inner_collect(r.rel_type, str(r.object_id), sources, depth)
+            if r.object_id:
+                inner_collect(r.rel_type, str(r.object_id), sources, depth)
 
         # If we traverse into a Campaign object, walk everything tagged
         # with that campaign along with related objects.
