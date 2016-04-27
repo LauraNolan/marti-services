@@ -1196,17 +1196,13 @@ def import_standards_doc(data, analyst, method, ref=None, make_event=False,
 
     try:
         parser = STIXParser(data, analyst, method)
-        print '1'
         parser.parse_stix(reference=ref, make_event=make_event, source=source)
-        print '2'
         parser.relate_objects()
     except STIXParserException, e:
-        print 'error 1: ', e
         logger.exception(e)
         ret['reason'] = str(e.message)
         return ret
     except Exception, e:
-        print 'error 2: ', e
         logger.exception(e)
         ret['reason'] = str(e)
         return ret
