@@ -243,15 +243,14 @@ class STIXParser():
                 for rel in getattr(indicator, 'related_indicators', ()):
                     if rel.item.title in 'CRITs RFI':
                         topic = rel.item.description
-                        add_rfi(obj_type, obj_id, topic, rel.item.short_description, rel.item.id_, rel.item.timestamp)
+                        add_rfi(obj_type, obj_id, topic, 'taxii', rel.item.id_, rel.item.timestamp)
 
                         if rel.item.producer:
                             request = rel.item.producer.description
-                            print 'this is it: ', rel.item.producer.references[0]
-                            add_rfi_request(obj_type, obj_id, topic, request, rel.item.producer.references[0], rel.item.producer.identity.name, rel.item.producer.time)
+                            add_rfi_request(obj_type, obj_id, topic, request, 'taxii', rel.item.producer.identity.name, rel.item.producer.time)
 
                             for item in rel.item.producer.contributing_sources:
-                                add_rfi_response(obj_type, obj_id, topic, item.description, request, item.references[0], item.identity.name, item.time)
+                                add_rfi_response(obj_type, obj_id, topic, item.description, request, 'taxii', item.identity.name, item.time)
 
     def parse_campaigns(self, indicators, campaigns):
 
