@@ -576,6 +576,9 @@ def to_stix_rfi(obj):
         ind.description = each.topic
         ind.id_ = each.source
 
+        if each.instance == []:
+            list_rfis.append(ind)
+
         for instance in each.instance:
             request = InformationSource()
             request.time = Time(instance.request.date)
