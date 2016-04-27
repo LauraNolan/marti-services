@@ -339,18 +339,16 @@ class STIXParser():
 
                 obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
 
-                if 'Campaign' not in str(self.imported[indicator.id_][0]):
+                for item in indicator.producer.contributing_sources:
+                    obj.add_source(source=str(item.identity.name),
+                        method=str(item.descriptions.__getitem__(2)),
+                        reference=str(item.descriptions.__getitem__(1)),
+                        date=item.time.start_time.value,
+                        analyst='taxii')
 
-                    for item in indicator.producer.contributing_sources:
-                        obj.add_source(source=str(item.identity.name),
-                            method=str(item.descriptions.__getitem__(2)),
-                            reference=str(item.descriptions.__getitem__(1)),
-                            date=item.time.start_time.value,
-                            analyst='taxii')
-
-                    obj.save(username='taxii')
-                    obj.reload()
-                    obj.sanitize_sources(username='taxii')
+                obj.save(username='taxii')
+                obj.reload()
+                obj.sanitize_sources(username='taxii')
 
     def was_saved(self, indicator):
         if indicator.id_ in self.imported:
