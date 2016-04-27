@@ -737,6 +737,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
             for each in ttp:
                 ind.add_indicated_ttp(each)
 
+            ind.producer = to_stix_information_source(obj)
             ind.short_descriptions = obj.sectors
             ind.descriptions = obj.aliases
 
