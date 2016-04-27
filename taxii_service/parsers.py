@@ -250,9 +250,6 @@ class STIXParser():
                             add_rfi_request(obj_type, obj_id, topic, request, 'taxii', str(rel.item.producer.identity.name), rel.item.producer.time.start_time.value)
 
                             for item in rel.item.producer.contributing_sources:
-                                print 'inside of source: ', topic
-                                print request
-                                print 'response: ', item.description
                                 add_rfi_response(obj_type, obj_id, topic, str(item.description), request, 'taxii', str(item.identity.name), item.time.start_time.value)
 
     def parse_campaigns(self, indicators, campaigns):
