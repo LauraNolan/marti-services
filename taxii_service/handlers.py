@@ -580,13 +580,13 @@ def to_stix_rfi(obj):
             request = InformationSource()
             request.time = Time(instance.request.date)
             request.description = instance.request.rfi
-            request.identity = Identity(instance.request.source)
+            request.identity = Identity(name=instance.request.source)
 
             for response in instance.response:
                 responseSource = InformationSource()
                 responseSource.time = Time(response.date)
                 responseSource.description = response.rfi
-                responseSource.identity = Identity(response.source)
+                responseSource.identity = Identity(name=response.source)
                 request.add_contributing_source(responseSource)
 
             ind.producer = request
