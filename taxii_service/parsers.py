@@ -235,7 +235,7 @@ class STIXParser():
 
         for campaign in campaigns:
             res = add_campaign(str(campaign.title), str(campaign.description),
-                         None, 'taxii')
+                         None, 'taxii', source=self.source.name)
 
             if 'id' in res:
                 self.imported[indicators[0].id_] = ('Campaign', class_from_id('Campaign', res['id']))
