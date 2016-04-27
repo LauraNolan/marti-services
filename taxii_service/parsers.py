@@ -26,6 +26,7 @@ from crits.core.crits_mongoengine import EmbeddedSource
 from crits.core.handlers import does_source_exist
 from crits.core.handlers import source_add_update
 from crits.core.handlers import set_releasability_flag
+from crits.core.handlers import add_rfi, add_rfi_request, add_rfi_response
 from cybox.core import Observable
 
 from crits.vocabulary.events import EventTypes
@@ -200,6 +201,7 @@ class STIXParser():
             self.parse_sectors(self.package.indicators)
             self.parse_sightings(self.package.indicators)
             self.parse_kill_chain(self.package.indicators)
+            self.parse_rfi(self.package.indicators)
             if self.package.campaigns:
                 self.parse_related_campaigns(self.package.indicators, self.package.campaigns)
             if self.package.stix_header:
@@ -230,6 +232,26 @@ class STIXParser():
                 for ttp in indicator.indicated_ttps:
                     merge_ttp(self.imported[indicator.id_][1].id, str(ttp.item.description),
                               'taxii', ttp.item.timestamp)
+
+    def parse_rfi(self, indicators):
+        for indicator in indicators:
+
+            if self.was_saved(indicator):
+                obj_id = self.imported[indicator.id_][1].id
+                obj_type = self.imported[indicator.id_][0]
+
+                for rel in getattr(indicator, 'related_indicators', ()):
+                    if rel.item.title in 'CRITs RFI':
+                        topic = rel.item.description
+                        add_rfi(obj_type, obj_id, topic, rel.item.short_description, rel.item.id_, rel.item.timestamp)
+
+                        if rel.item.producer:
+                            request = rel.item.producer.description
+                            print 'this is it: ', rel.item.producer.references[0]
+                            add_rfi_request(obj_type, obj_id, topic, request, rel.item.producer.references[0], rel.item.producer.identity.name, rel.item.producer.time)
+
+                            for item in rel.item.producer.contributing_sources:
+                                add_rfi_response(obj_type, obj_id, topic, item.description, request, item.references[0], item.identity.name, item.time)
 
     def parse_campaigns(self, indicators, campaigns):
 

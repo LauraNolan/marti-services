@@ -563,6 +563,40 @@ def to_stix_comments(obj):
 
     return ind_comments
 
+def to_stix_rfi(obj):
+    from stix.indicator import Indicator as S_Ind
+    from stix.common import InformationSource, Identity
+
+    list_rfis = []
+
+    for each in obj.rfi:
+        ind = S_Ind()
+        ind.title = "CRITs RFI"
+        ind.timestamp = each.date
+        ind.description = each.topic
+        ind.id_ = each.source
+        ind.short_description = each.analyst
+
+        for instance in each.instance:
+            request = InformationSource()
+            request.time = Time(instance.request.date)
+            request.description = instance.request.rfi
+            request.identity = Identity(instance.request.source)
+            request.references = instance.request.analyst
+
+            for response in instance.response:
+                responseSource = InformationSource()
+                responseSource.time = Time(response.date)
+                responseSource.description = response.rfi
+                responseSource.references = response.analyst
+                responseSource.identity = Identity(response.source)
+                request.add_contributing_source(responseSource)
+
+            ind.producer = request
+            list_rfis.append(ind)
+
+    return list_rfis
+
 def to_stix_indicator(obj):
     """
     Creates a STIX Indicator object from a CybOX object.
@@ -721,6 +755,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
             sight = to_stix_sightings(obj)
             kill = to_stix_kill_chains(obj)
             ttp = to_stix_ttps(obj)
+            to_stix_rfi(obj)
 
             ind = S_Ind()
             ind.title = "MARTI Campaign"
@@ -751,6 +786,7 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
             sight = to_stix_sightings(obj)
             kill = to_stix_kill_chains(obj)
             tlp = to_stix_tlp(obj)
+            to_stix_rfi(obj)
             if obj_type == class_from_type('Sample')._meta['crits_type']:
                 stx, releas = to_cybox_observable(obj, bin_fmt=bin_fmt)
             else:
