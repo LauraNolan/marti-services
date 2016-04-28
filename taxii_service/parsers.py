@@ -242,9 +242,6 @@ class STIXParser():
 
                 for rel in getattr(indicator, 'related_indicators', ()):
                     if rel.item.title in 'CRITs RFI':
-                        print 'adding new RFI'
-                        print rel.item.to_xml()
-                        print 'End of new RFI'
                         topic = str(rel.item.description)
                         add_rfi(obj_type, obj_id, topic, 'taxii', str(rel.item.id_), rel.item.timestamp)
 
