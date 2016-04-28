@@ -563,10 +563,26 @@ def to_stix_comments(obj):
 
     return ind_comments
 
-def to_stix_rfi(obj):
-    from stix.indicator import Indicator as S_Ind
+def to_source(obj):
+
     from stix.common import InformationSource, Identity
 
+    mySource = InformationSource()
+    mySource.time = Time(obj.request.date)
+    mySource.description = obj.request.rfi
+    mySource.identity = Identity(name=obj.request.source)
+
+    for item in obj.response:
+        itemSource = InformationSource()
+        itemSource.time = Time(item.date)
+        itemSource.identity = Identity(name=item.source)
+        itemSource.description = item.rfi
+        mySource.add_contributing_source(itemSource)
+
+    return mySource
+
+def to_stix_rfi(obj):
+    from stix.indicator import Indicator as S_Ind
     list_rfis = []
 
     for each in obj.rfi:
@@ -576,24 +592,17 @@ def to_stix_rfi(obj):
         ind.description = each.topic
         ind.id_ = each.source
 
-        if each.instance == []:
-            list_rfis.append(ind)
+        list_rfis.append(ind)
 
-        for instance in each.instance:
-            request = InformationSource()
-            request.time = Time(instance.request.date)
-            request.description = instance.request.rfi
-            request.identity = Identity(name=instance.request.source)
+        for item in each.instance:
+            ind_2 = S_Ind()
+            ind_2.title = "CRITs RFI"
+            ind_2.timestamp = each.date
+            ind_2.description = each.topic
+            ind_2.producer = to_source(item)
+            ind_2.id_ = each.source
 
-            for response in instance.response:
-                responseSource = InformationSource()
-                responseSource.time = Time(response.date)
-                responseSource.description = response.rfi
-                responseSource.identity = Identity(name=response.source)
-                request.add_contributing_source(responseSource)
-
-            ind.producer = request
-            list_rfis.append(ind)
+            list_rfis.append(ind_2)
 
     return list_rfis
 
