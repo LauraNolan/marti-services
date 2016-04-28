@@ -193,19 +193,32 @@ class STIXParser():
             res = self.parse_indicators(self.package.indicators)
             if res == False:
                 self.parse_campaigns(self.package.indicators, self.package.campaigns)
+                print '1'
                 self.parse_ttps(self.package.indicators)
+                print '2'
                 self.parse_aliases(self.package.indicators)
+                print '3'
             self.parse_comments(self.package.indicators)
+            print '4'
             self.parse_relationship(self.package.indicators)
+            print '5'
             self.parse_sources(self.package.indicators)
+            print '6'
             self.parse_sectors(self.package.indicators)
+            print '7'
             self.parse_sightings(self.package.indicators)
+            print '8'
             self.parse_kill_chain(self.package.indicators)
+            print '9'
             self.parse_rfi(self.package.indicators)
+            print '10'
             if self.package.campaigns:
+                print '11'
                 self.parse_related_campaigns(self.package.indicators, self.package.campaigns)
             if self.package.stix_header:
+                print '12'
                 self.parse_tlp(self.package.indicators, self.package.stix_header)
+            print '13'
             self.set_releasability(self.package.indicators, source)
 
         if self.package.observables and self.package.observables.observables:
@@ -358,21 +371,26 @@ class STIXParser():
     def parse_sources(self, indicators):
 
         for indicator in indicators:
-
+            print '1'
             if self.was_saved(indicator):
+                print '2'
 
                 obj = class_from_id(str(self.imported[indicator.id_][0]), str(self.imported[indicator.id_][1].id))
-
+                print '3'
                 for item in indicator.producer.contributing_sources:
+                    print '4'
                     obj.add_source(source=str(item.identity.name),
                         method=str(item.descriptions.__getitem__(2)),
                         reference=str(item.descriptions.__getitem__(1)),
                         date=item.time.start_time.value,
                         analyst='taxii')
-
+                print '5'
                 obj.save(username='taxii')
+                print '6'
                 obj.reload()
+                print '7'
                 obj.sanitize_sources(username='taxii')
+                print '8'
 
     def was_saved(self, indicator):
         if indicator.id_ in self.imported:
