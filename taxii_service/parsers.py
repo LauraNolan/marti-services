@@ -242,6 +242,9 @@ class STIXParser():
 
                 for rel in getattr(indicator, 'related_indicators', ()):
                     if rel.item.title in 'CRITs RFI':
+                        print 'adding new RFI'
+                        print rel.item.to_xml()
+                        print 'End of new RFI'
                         topic = str(rel.item.description)
                         add_rfi(obj_type, obj_id, topic, 'taxii', str(rel.item.id_), rel.item.timestamp)
 
@@ -256,7 +259,7 @@ class STIXParser():
 
         for campaign in campaigns:
             res = add_campaign(str(campaign.title), str(campaign.description),
-                         None, 'taxii', source=self.source.name)
+                         None, 'taxii', source=self.source.name, id=self.package.id_)
 
             if 'id' in res:
                 self.imported[indicators[0].id_] = ('Campaign', class_from_id('Campaign', res['id']))
