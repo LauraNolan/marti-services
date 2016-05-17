@@ -10,6 +10,26 @@ from . import forms
 from . import auto
 import time
 
+from lxml import etree
+from libtaxii.common import set_xml_parser
+
+XML_PARSER = etree.XMLParser(attribute_defaults=False,
+                                      dtd_validation=False,
+                                      load_dtd=False,
+                                      no_network=True,
+                                      ns_clean=True,
+                                      recover=False,
+                                      remove_blank_text=False,
+                                      remove_comments=False,
+                                      remove_pis=False,
+                                      strip_cdata=True,
+                                      compact=True,
+                                      # collect_ids=True,
+                                      resolve_entities=False,
+                                      huge_tree=True)
+
+set_xml_parser(XML_PARSER)
+
 logger = logging.getLogger(__name__)
 
 class TAXIIClient(Service):

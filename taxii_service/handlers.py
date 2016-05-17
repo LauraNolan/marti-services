@@ -1008,6 +1008,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
             if res.status_type == tm11.ST_SUCCESS:
                 print "Message sent..."
                 failed = False
+                #print "STIX Message: ", stix_doc.to_xml()
                 ret['rcpts'].append(rcpt)
             else:
                 #try_10 = True
@@ -1015,7 +1016,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
                 ####ERROR HANDLING####
                 print "Message not sent..."
                 print "Result: ", res.to_xml()
-                print "STIX Message: ", stix_doc.to_xml()
+                #print "STIX Message: ", stix_doc.to_xml()
                 reset_releasebility_flag(stix_msg['final_objects'])
                 ####END ERROR HANDLING####
         else:
