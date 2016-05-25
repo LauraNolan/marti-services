@@ -47,6 +47,8 @@ def start_polling():
 
     # Get config and grab some stuff we need.
     sc = get_config('taxii_service')
+    if not sc:
+        return
     sc = sc.to_dict()
 
     if 'thread' in sc:
