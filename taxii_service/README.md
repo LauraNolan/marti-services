@@ -4,7 +4,7 @@ This TAXII service allows you to send and receive content automatically between 
 
 The current implementation of the taxii_services only allows connections to one taxii server.
 
-## Updates from CRITs
+# Updates from CRITs
 
 * Removed manual taxii service option from TLOs (see [views.py](views.py))
 * [Added auto polling and inboxing](#auto-polling-and-inboxing)
@@ -12,14 +12,14 @@ The current implementation of the taxii_services only allows connections to one 
 * [Added walkthrough to config menu](#walkthrough)
 * [Various bug fixes](#bug-fixes)
 
-## Auto polling and inboxing
+# Auto polling and inboxing
 
 This was done by adding threads for both polling and inboxing (see [auto.py](auto.py)). 
    
-### Polling
+## Polling
 This is a simple loop that continuously polls the taxii server for the specified feeds.
   
-### Inboxing
+## Inboxing
 Essentially the auto file pulls all the items that were modified since the last time. Then loop through and send them via TAXII if they are marked to be sent and are in the taxii_service list.
 
 Currently the only TLO's that are sent are: domains, email, ips, campaings, and samples. More can be added by following the same structure show below, but they will need to be tested thoroughly.
@@ -41,7 +41,7 @@ Additionally, if a TAXII message was received, the id is stored to help prevent 
  
 ![Add Releasability](images/add_releasability.gif) 
         
-## Walkthrough
+# Walkthrough
 Added helpful walkthrough to taxii_service config page. The main functionality was added in core, but you need to add the html specifics to each form item. More specifically you need to define the 'data-step' and 'data-intro' to utalize the walkthrough feature.
 
 [forms.py](forms.py)
@@ -58,7 +58,7 @@ auto_inbox = forms.BooleanField(required=False,
 ![Taxii Service Walkthrough](images/taxii_service_walkthrough.gif)
 
     
-## Bug fixes
+# Bug fixes
 
 [\__init__.py](__init__.py)
     
@@ -104,7 +104,7 @@ elif obj.ip_type == IPTypes.IPV6_SUBNET:
     obje.category = "ipv6-subnet"
 ```
     
-## Notes
+# Notes
     
 Source and feed must be same, have not tested with source and feed being different. 
 
