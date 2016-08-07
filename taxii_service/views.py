@@ -33,19 +33,19 @@ def get_taxii_config_form(request, crits_type, crits_id):
                                   {'error': "Must be AJAX."},
                                   RequestContext(request))
 
-    if request.method == "GET":
-        obj = class_from_id(crits_type, crits_id)
-        if not obj:
-            ret = {'success': False, 'reason': "Could not locate object in the database."}
-            return HttpResponse(json.dumps(ret), mimetype="application/json")
-
-        tform = forms.TAXIIForm(request.user.username, obj)
-        taxii_form = {'form' : render_to_string("_taxii_form_template.html", {'form' : tform})}
-        return HttpResponse(json.dumps(taxii_form), mimetype="application/json")
-    else:
-        return render_to_response('error.html',
-                                  {'error': "Must be AJAX."},
-                                  RequestContext(request))
+    # if request.method == "GET":
+    #     obj = class_from_id(crits_type, crits_id)
+    #     if not obj:
+    #         ret = {'success': False, 'reason': "Could not locate object in the database."}
+    #         return HttpResponse(json.dumps(ret), mimetype="application/json")
+    #
+    #     tform = forms.TAXIIForm(request.user.username, obj)
+    #     taxii_form = {'form' : render_to_string("_taxii_form_template.html", {'form' : tform})}
+    #     return HttpResponse(json.dumps(taxii_form), mimetype="application/json")
+    # else:
+    #     return render_to_response('error.html',
+    #                               {'error': "Must be AJAX."},
+    #                               RequestContext(request))
 
 @user_passes_test(user_can_view_data)
 def preview_taxii_service(request, crits_type, crits_id):

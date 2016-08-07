@@ -8,8 +8,13 @@ from crits.services.core import Service, ServiceConfigError
 
 from . import forms
 from . import auto
-import time
 
+
+"""
+Allow for large XML fields
+
+This is done by setting the XML_PARSER with the huge_tree value set to True.
+"""
 from lxml import etree
 from libtaxii.common import set_xml_parser
 
@@ -24,18 +29,15 @@ XML_PARSER = etree.XMLParser(attribute_defaults=False,
                                       remove_pis=False,
                                       strip_cdata=True,
                                       compact=True,
-                                      # collect_ids=True,
                                       resolve_entities=False,
-                                      huge_tree=True)
+                                      huge_tree=True) # This is what is set to False by default
 
 set_xml_parser(XML_PARSER)
 
 logger = logging.getLogger(__name__)
 
 class TAXIIClient(Service):
-    """
-    Send TAXII message to TAXII server.
-    """
+    """ Send TAXII message to TAXII server. """
 
     name = "taxii_service"
     version = "2.0.2"

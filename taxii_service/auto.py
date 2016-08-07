@@ -4,13 +4,11 @@ import time
 from . import handlers
 from . import taxii
 from dateutil.tz import tzutc
-from dateutil.tz import tzlocal
 from crits.core.mongo_tools import mongo_find
 import pytz
 from datetime import datetime
 from dateutil.parser import parse
 from datetime import timedelta
-from pytz import timezone
 from crits.core.class_mapper import class_from_id
 
 
@@ -28,15 +26,15 @@ class TaxiiAgentPolling(threading.Thread):
 
             if 'active' in sc:
 
-                if sc['active']:
+                if sc['active']:    # Only run if the service is active
 
-                    if sc['auto_polling']:
+                    if sc['auto_polling']:  #Only run of auto_polling is turned on
 
                        for crtfile in certfiles:
                            (source, feed, polling, inbox) = crtfile.split(',')
                            src = source.strip()
                            if polling in 'true':
-                               handlers.execute_taxii_agent(analyst="taxii", method="TAXII Agent Web",feed=src)
+                               handlers.execute_taxii_agent(analyst="taxii", method="TAXII Agent Web", feed=src)
 
             time.sleep(int(sc['polling_time']))
 
@@ -53,8 +51,9 @@ def start_polling():
 
     if 'thread' in sc:
         if not sc['thread']:
-            #sc['thread'] = True
-            #update_config('taxii_service', sc, 'taxii')
+            # This makes sure that only one thread is started when apache is setup as multithreaded.
+            sc['thread'] = True
+            update_config('taxii_service', sc, 'taxii')
 
             if not polling_thread.isAlive():
                 polling_thread.start()
@@ -117,6 +116,7 @@ class TaxiiAgentInbox(threading.Thread):
                         crits_taxii.end = end
                         crits_taxii.feed = feed
 
+                        # Create a list of items that were recently modified
                         TLO = []
                         TLO.append([{'items': mongo_find('domains', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Domain'}])
                         TLO.append([{'items': mongo_find('email', {'modified': {'$gt': start}}, sort=[('modified',-1)])}, {'collection' : 'Email'}])
@@ -136,9 +136,9 @@ class TaxiiAgentInbox(threading.Thread):
                                     for release in doc['releasability']:
                                         if release['name'] in feeds:
                                             if 'release' in release:
-                                                if release['release']:
+                                                if release['release']:  # Checking release flag
                                                     release_list.append(release['name'])
-                                                    if 'reference_id' in release:
+                                                    if 'reference_id' in release:   #Checking to see if STIX id already exists
                                                         release_id = release['reference_id']
 
                                 if release_list != []:
