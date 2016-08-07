@@ -4,11 +4,15 @@ This TAXII service allows you to send and receive content automatically between 
 
 The current implementation of the taxii_services only allows connections to one taxii server.
 
+# Initial setup
+
+See documentation: HERE (**TODO: FILL ME OUT**)
+
 # Updates from CRITs
 
 * Removed manual taxii service option from TLOs (see [views.py](views.py))
 * [Added auto polling and inboxing](#auto-polling-and-inboxing)
-* Added more fields to STIX message
+* [Added more fields to STIX message](#stix-expansion)
 * [Added walkthrough to config menu](#walkthrough)
 * [Various bug fixes](#bug-fixes)
 
@@ -35,12 +39,52 @@ TLO.append([{'items': mongo_find('sample', {'modified': {'$gt': start}}, sort=[(
 #Other TLOs that TAXII will send without error: pcaps/PCAP, raw_data/RawData, certificates/Certificate
 ```
 
-When a user sets the releasability of an item, a flag is set that the taxii_service looks for. 
+When a user sets the releasability of an item, a flag is set that the taxii_service looks for. Once the item is sent, the flag is reset.
+
+```python
+def reset_releasebility_flag(items):
+
+    for item in items:
+        item.set_releasability_flag(flag=False)
+        item.save(username='taxii')
+```
+
+Once a message is read in from polling the TAXII server and saved, the flag gets set so that any updates can be sent out.
+
+```python
+def set_releasability(self, indicators, feed):
+
+    for indicator in indicators:
+        if self.was_saved(indicator):
+            set_releasability_flag(str(self.imported[indicator.id_][0]),
+                                   str(self.imported[indicator.id_][1].id),
+                                   'taxii', feed, self.package.id_)
+    return
+```
 
 Additionally, if a TAXII message was received, the id is stored to help prevent duplication.
  
 ![Add Releasability](images/add_releasability.gif) 
-        
+ 
+# STIX Expansion
+Tightened up the way STIX messages were formed and added the following: 
+
+    * Comments
+    * TLP
+    * Kill chain
+    * Campaign (entire TLO)
+    * Relationships
+    * Sightings
+    * Source
+    * Sectors
+    * RFI
+
+The [handlers.py](handlers.py) file adds the items to the STIX message and the [parsers.py](parsers.py) file parses them back into the database.
+
+The various additions are broken out into their own functions in both files. You can use them as examples to add more information to the STIX message.
+
+Once you add a new function, make sure you add the call to the to_stix function in handlers and the parse_stix function in parsers.
+
 # Walkthrough
 Added helpful walkthrough to taxii_service config page. The main functionality was added in core, but you need to add the html specifics to each form item. More specifically you need to define the 'data-step' and 'data-intro' to utalize the walkthrough feature.
 

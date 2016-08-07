@@ -1050,7 +1050,7 @@ def run_taxii_service(analyst, obj, rcpts, preview, relation_choices=[], confirm
     ret['success'] = True
     return ret
 
-def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
+def gen_send(tm_, client, stick_block, hostname, t_xml, dcn=None, eh=None,
              url="/services/inbox/"):
     """
     Generate and send a TAXII message.
@@ -1059,8 +1059,8 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
     :type tm_: TAXII message class.
     :param client: The TAXII client to use.
     :type client: TAXII Client.
-    :param encrypted_block: The encrypted block to use.
-    :type encrypted_block: TAXII Encrypted Block
+    :param stick_block: The encrypted block to use.
+    :type stick_block: TAXII Encrypted Block
     :param hostname: The TAXII server hostname to connect to.
     :type hostname: str
     :param t_xml: The TAXII XML Schema version we used.
@@ -1077,12 +1077,7 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
     # Wrap encrypted block in content block
     content_block = tm_.ContentBlock(
                 content_binding = t.CB_STIX_XML_111,
-                content = encrypted_block.to_xml())
-
-#tm_.ContentBlock(
-        #content_binding = "application/x-pks7-mime",
-        #content = encrypted_block
-    #)
+                content = stick_block.to_xml())
 
     # Create inbox message
     if dcn:
@@ -1103,22 +1098,10 @@ def gen_send(tm_, client, encrypted_block, hostname, t_xml, dcn=None, eh=None,
 
     # send inbox message via TAXII service
     try:
-#        print "trying to send to taxii"
-       # response = client.callTaxiiService2(
-        #    hostname,
-         #   url,
-          #  t_xml,
-           # inbox_message.to_xml()
-        #)
-        #print "message sent..."
-        #print response
-        #taxii_message = t.get_message_from_http_response(response,
-                              #                           inbox_message.message_id)
-        
         response = client.call_taxii_service2(hostname, '/services/inbox/', VID_TAXII_XML_11, inbox_message.to_xml(pretty_print=True))
         taxii_message = t.get_message_from_http_response(response, inbox_message.message_id)
-        #print taxii_message.to_xml(pretty_print=True)
-        #print response
+        #print taxii_message.to_xml(pretty_print=True)  #DEBUGGING
+        #print response #DEBUGGING
 
         return (response, taxii_message)
     # can happen if 'hostname' is reachable, but is not a TAXII server, etc
