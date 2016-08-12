@@ -204,7 +204,7 @@ https://stixproject.github.io/documentation/suggested-practices/
 
 # Walkthrough
 ---
-Added helpful walkthrough to taxii_service config page. The main functionality was added in core, but you need to add the html specifics to each form item. More specifically you need to define the 'data-step' and 'data-intro' to utalize the walkthrough feature.
+Added helpful walkthrough to taxii_service config page. The main functionality was added in core, but you need to add the html specifics to each form item. More specifically you need to define the 'data-step' and 'data-intro' to utilize the walkthrough feature.
 
 Used the intro.js library: https://github.com/usablica/intro.js
 
