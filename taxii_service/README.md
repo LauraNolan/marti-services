@@ -1,13 +1,13 @@
 # OVERVIEW
 ---
 
-This TAXII service allows you to send and to receive content automatically between a MARTI instance and a TAXII server(it is currently known to work with a simple [Yeti Server](#yeti-taxii-server)) 
+This TAXII service allows you to send and receive content automatically between a MARTI instance and a TAXII server. It is currently known to work with a simple [Yeti Server](#yeti-taxii-server). 
 
 The current implementation of the taxii_services only allows connections to one taxii server.
 
 # Initial setup
 ---
-See the [MARTI_Configuration_Guide_v07.pdf](MARTI_Configuration_Guide_v07.pdf)
+See the [MARTI_Configuration_Guide_v07.pdf](MARTI_Configuration_Guide_v07.pdf) for specific instructions.
 
 Section 9 discusses how to setup the taxii configuration in MARTI. Read the directions carefully to answer any questions you might have (refer to the [walkthrough](#walkthrough) for additional help).
 
@@ -23,7 +23,7 @@ It is recommended to set the server up with SSL (which is not how it comes out o
 
 # Updates from CRITs
 ---
-* Removed manual taxii service option from TLOs (see [views.py](views.py))
+* Removed manual taxii_service option from TLOs (see [views.py](views.py))
 * [Added auto polling and inboxing](#auto-polling-and-inboxing)
 * [Added more fields to STIX message](#stix-expansion)
 * [Added walkthrough to config menu](#walkthrough)
@@ -37,11 +37,12 @@ This was done by adding threads for both polling and inboxing (see [auto.py](aut
 ---   
 ## Polling
 
-This is a simple loop that continuously polls the taxii server for the specified feeds.
+This is a simple loop that continuously polls the TAXII server for the specified feeds.
 
 ---  
 ## Inboxing
-Essentially the auto file pulls all the items that have been modified since the last pull. Each item is then checked to see if they are marked to be sent and are in the taxii_service list. If they pass both of those checks, they are sent via TAXII.
+
+The auto file pulls all the items that have been modified since the last pull. Each item is then checked to see if they are marked to be sent and are in the taxii_service list. If they pass both of those checks, they are sent via TAXII.
 
 Currently the only TLO's that are sent are the domains, email, ips, campaigns, and samples. More TLO's can be added and sent if you follow the same structure as shown below. However, thorough testing will need to be performed to ensure that these new items can be sent.
 
@@ -85,7 +86,7 @@ Additionally, if a TAXII message was received, the id is stored to help prevent 
  
 # STIX Expansion
 ---
-Tightened up the way STIX messages were formed and added the following: 
+Tightened up the way STIX messages were formed and added the following information to each message. 
 
     * Comments
     * TLP (Proper STIX Usage)
