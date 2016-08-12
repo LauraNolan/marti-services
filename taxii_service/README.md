@@ -6,7 +6,20 @@ The current implementation of the taxii_services only allows connections to one 
 
 # Initial setup
 
-See documentation: HERE (**TODO: FILL ME OUT**)
+See the [MARTI_Configuration_Guide_v07.pdf](MARTI_Configuration_Guide_v07.pdf)
+
+Section 9 tells you how to setup the taxii configuration in MARTI. Read the directions carfully and if there are questions, the [walkthrough](#walkthrough) should answer most of them.
+
+Section 8 tells you how to add a new feed to the taxii configuration in MARTI.
+
+# Yeti (TAXII Server)
+
+Section 6 tells you how to add a new feed to the yeti server. 
+
+The yeti server used can be found here: https://github.com/TAXIIProject/yeti
+
+It is recommended to set the server up with SSL (which is not how it comes out of the box).
+
 
 # Updates from CRITs
 
@@ -64,19 +77,20 @@ def set_releasability(self, indicators, feed):
 
 Additionally, if a TAXII message was received, the id is stored to help prevent duplication.
  
-![Add Releasability](images/add_releasability.gif) 
+![Add Releasability](images/add_releasability.gif
  
 # STIX Expansion
 Tightened up the way STIX messages were formed and added the following: 
 
     * Comments
-    * TLP
-    * Kill chain
-    * Campaign (entire TLO)
-    * Relationships
-    * Sightings
-    * Source
-    * Sectors
+    * TLP (Proper STIX Usage)
+    * Kill chain 
+    * Campaign (entire TLO) (Proper STIX Usage)
+    * Campaign (associated) (Proper STIX Usage)
+    * Relationships (Proper STIX Usage)
+    * Sightings (Proper STIX Usage)
+    * Source (Proper STIX Usage)
+    * Sectors 
     * RFI
 
 The [handlers.py](handlers.py) file adds the items to the STIX message and the [parsers.py](parsers.py) file parses them back into the database.
@@ -85,8 +99,32 @@ The various additions are broken out into their own functions in both files. You
 
 Once you add a new function, make sure you add the call to the to_stix function in handlers and the parse_stix function in parsers.
 
+```python
+def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
+    """ Converts a CRITs object to a STIX document."""
+```
+
+```python
+def parse_stix(self, reference='', make_event=False, source=''):
+        """ Parse the document. """
+```
+
+## Useful links for development
+
+http://stixproject.github.io/documentation/
+
+https://stix.readthedocs.io/en/stable/index.html
+
+http://cybox.readthedocs.io/en/latest/index.html
+
+https://cyboxproject.github.io/documentation/suggested-practices
+
+https://stixproject.github.io/documentation/suggested-practices/
+
 # Walkthrough
 Added helpful walkthrough to taxii_service config page. The main functionality was added in core, but you need to add the html specifics to each form item. More specifically you need to define the 'data-step' and 'data-intro' to utalize the walkthrough feature.
+
+Used the intro.js library: https://github.com/usablica/intro.js
 
 [forms.py](forms.py)
 
@@ -99,7 +137,7 @@ auto_inbox = forms.BooleanField(required=False,
                                 attrs={'data-step': '8',
                                 'data-intro': 'Do you want MARTI to send data to the TAXII server automatically (if released)?'})
 ```
-![Taxii Service Walkthrough](images/taxii_service_walkthrough.gif)
+![Taxii Service Walkthrough](images/taxii_service_walkthrough.gif
 
     
 # Bug fixes
@@ -151,7 +189,5 @@ elif obj.ip_type == IPTypes.IPV6_SUBNET:
 # Notes
     
 Source and feed must be same, have not tested with source and feed being different. 
-
-<!--![GitHub Logo](images/test.gif)-->
 
 
