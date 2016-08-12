@@ -104,7 +104,7 @@ The [handlers.py](handlers.py) file adds the items to the STIX message and the [
 ---
 ## Adding new items to the STIX message
 
-For every item added, there is a function for converting/parsing to/from STIX. Use these as examples to add more items to the STIX message. **The most useful information can be found in the cybox/stix documentation ([links](#useful-links-for-development)).**
+For every item added, there is a function for converting to (to_stix_XX) and parsing (parse_XX) STIX messages. Use these as examples to add more items to the STIX message. **The most useful information can be found in the cybox/stix documentation ([links](#useful-links-for-development)).**
 
 It is recommended to try and adhere to the STIX standards, but there will be times where there isn't a 'STIX' way to add a specific piece of information. In this event, adding that information via a related indicator has been a good solution.
 
@@ -133,9 +133,9 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
                 for each in comm:
                     ind.add_related_indicator(each)
 ```
-As you can see the first each to_stix_XX function is called (always taking in obj) and depending on what that function returns depends on how it is added to the STIX message. 
+As you can see, first each to_stix_XX function is called (always taking in obj). Then, depending on what that function returns depends on how it is added to the STIX message. 
 
-If there is a specific stix field (such as sightings), it is added to the appropriate place. Otherwise, the information is added as a related indicator (such as comments). 
+For example, if there is a specific stix field (such as sightings), it is added to the appropriate place. Otherwise, the information is added as a related indicator (such as comments). 
 
 Each to_stix_XX function can be used as a reference to get started on a new function. 
 
