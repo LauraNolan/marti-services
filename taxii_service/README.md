@@ -122,9 +122,6 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
             comm =  to_stix_comments(obj)
             rel = to_stix_relationship(obj)
             sight = to_stix_sightings(obj)
-            kill = to_stix_kill_chains(obj)
-            tlp = to_stix_tlp(obj)
-            rfi = to_stix_rfi(obj)
             ...
             for ob in stx:
                 ind.add_observable(ob)
@@ -133,15 +130,6 @@ def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
                     ind.add_related_campaign(each)
                 for each in comm:
                     ind.add_related_indicator(each)
-                for each in rel:
-                    ind.add_related_indicator(each)
-                for each in rfi:
-                    ind.add_related_indicator(each)
-                for each in kill:
-                    ind.add_kill_chain_phase(each)
-            ...
-            ind.producer = to_stix_information_source(obj)
-            ind.short_descriptions = obj.sectors
 ```
 As you can see the first each to_stix_XX function is called (always taking in obj) and depending on what that function returns depends on how it is added to the STIX message. 
 
