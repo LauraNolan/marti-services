@@ -150,14 +150,7 @@ def parse_stix(self, reference='', make_event=False, source=''):
     ...
     if self.package.indicators:
             res = self.parse_indicators(self.package.indicators)
-            if res == False:
-                self.parse_campaigns(self.package.indicators, self.package.campaigns)
-                self.parse_ttps(self.package.indicators)
-                self.parse_aliases(self.package.indicators)
-            self.parse_comments(self.package.indicators)
-            self.parse_relationship(self.package.indicators)
-            self.parse_sources(self.package.indicators)
-            self.parse_sectors(self.package.indicators)
+            ...
             self.parse_sightings(self.package.indicators)
             self.parse_kill_chain(self.package.indicators)
             self.parse_rfi(self.package.indicators)
