@@ -30,10 +30,14 @@ It is recommended to set the server up with SSL (which is not how it comes out o
 
 # Auto polling and inboxing
 ---
+
 This was done by adding threads for both polling and inboxing (see [auto.py](auto.py)). 
+
 ---   
 ## Polling
+
 This is a simple loop that continuously polls the taxii server for the specified feeds.
+
 ---  
 ## Inboxing
 Essentially the auto file pulls all the items that were modified since the last time. Then loop through and send them via TAXII if they are marked to be sent and are in the taxii_service list.
