@@ -1,6 +1,7 @@
 # OVERVIEW
 ---
-This TAXII service allows you to send and receive content automatically between a MARTI instance and a TAXII server (in our testing we used a simple Yeti server). 
+
+This TAXII service allows you to send and to receive content automatically between a MARTI instance and a TAXII server(it is currently known to work with a simple [Yeti Server](#yeti-taxii-server)) 
 
 The current implementation of the taxii_services only allows connections to one taxii server.
 
@@ -8,13 +9,13 @@ The current implementation of the taxii_services only allows connections to one 
 ---
 See the [MARTI_Configuration_Guide_v07.pdf](MARTI_Configuration_Guide_v07.pdf)
 
-Section 9 tells you how to setup the taxii configuration in MARTI. Read the directions carfully and if there are questions, the [walkthrough](#walkthrough) should answer most of them.
+Section 9 discusses how to setup the taxii configuration in MARTI. Read the directions carefully to answer any questions you might have (refer to the [walkthrough](#walkthrough) for additional help).
 
-Section 8 tells you how to add a new feed to the taxii configuration in MARTI.
+Section 8 discusses how to add a new feed to the taxii configuration in MARTI.
 
 # Yeti (TAXII Server)
 ---
-Section 6 tells you how to add a new feed to the yeti server. 
+Section 6 discusses you how to add a new feed to the yeti server. 
 
 The yeti server used can be found here: https://github.com/TAXIIProject/yeti
 
@@ -40,9 +41,9 @@ This is a simple loop that continuously polls the taxii server for the specified
 
 ---  
 ## Inboxing
-Essentially the auto file pulls all the items that were modified since the last time. Then loop through and send them via TAXII if they are marked to be sent and are in the taxii_service list.
+Essentially the auto file pulls all the items that have been modified since the last pull. Each item is then checked to see if they are marked to be sent and are in the taxii_service list. If they pass both of those checks, they are sent via TAXII.
 
-Currently the only TLO's that are sent are: domains, email, ips, campaings, and samples. More can be added by following the same structure show below, but they will need to be tested thoroughly.
+Currently the only TLO's that are sent are the domains, email, ips, campaigns, and samples. More TLO's can be added and sent if you follow the same structure as shown below. However, thorough testing will need to be performed to ensure that these new items can be sent.
 
 ```python
 # Create a list of items that were recently modified
@@ -102,7 +103,7 @@ The [handlers.py](handlers.py) file adds the items to the STIX message and the [
 ---
 ## Adding new items to the STIX message
 
-The various additions are broken out into their own functions in both files. You can use them as examples to add more information to the STIX message. **The most useful information can be found in the cybox/stix documentation ([links](#useful-links-for-development)).**
+For every item added, there is a function for converting/parsing to/from STIX. Use these as examples to add more items to the STIX message. **The most useful information can be found in the cybox/stix documentation ([links](#useful-links-for-development)).**
 
 It is recommended to try and adhere to the STIX standards, but there will be times where there isn't a 'STIX' way to add a specific piece of information. In this event, adding that information via a related indicator has been a good solution.
 
@@ -111,7 +112,7 @@ It is recommended to try and adhere to the STIX standards, but there will be tim
 
 The [handlers.py](handlers.py) file adds the items to the STIX message. 
 
-Once you add a new to stix function, make sure you add the call to the to_stix function in handlers.
+Once you add a new to_stix_XX function, make sure you add the call to the to_stix function in handlers.py.
 
 ```python
 def to_stix(obj, items_to_convert=[], loaded=False, bin_fmt="raw", ref_id=None):
@@ -176,7 +177,7 @@ def parse_comments(self, indicators):
             obj_type = self.imported[indicator.id_][0]
 ```
 
-Some items needs to call the actual object to update it. This also gives the added benefit of being able to grab the objects url_key. 
+Some items need to call the actual object to update it. This also gives the added benefit of being able to grab the objects url_key. 
 
 ```python
 def parse_relationship(self, indicators):
