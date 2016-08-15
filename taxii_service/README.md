@@ -26,7 +26,6 @@ It is recommended to set the server up with SSL (which is not how it comes out o
 * Removed manual taxii_service option from TLOs (see [views.py](views.py))
 * [Added auto polling and inboxing](#auto-polling-and-inboxing)
 * [Added more fields to STIX message](#stix-expansion)
-* [Added walkthrough to config menu](#walkthrough)
 * [Various bug fixes](#bug-fixes)
 
 # Auto polling and inboxing
@@ -201,26 +200,6 @@ http://cybox.readthedocs.io/en/latest/index.html
 https://cyboxproject.github.io/documentation/suggested-practices
 
 https://stixproject.github.io/documentation/suggested-practices/
-
-# Walkthrough
----
-Added helpful walkthrough to taxii_service config page. The main functionality was added in core, but you need to add the html specifics to each form item. More specifically you need to define the 'data-step' and 'data-intro' to utilize the walkthrough feature.
-
-Used the intro.js library: https://github.com/usablica/intro.js
-
-[forms.py](forms.py)
-
-```python
-auto_inbox = forms.BooleanField(required=False,
-                            label="Auto Inbox",
-                            initial=False,
-                            help_text="Auto send Taxii feeds.",
-                            widget=forms.CheckboxInput(
-                                attrs={'data-step': '8',
-                                'data-intro': 'Do you want MARTI to send data to the TAXII server automatically (if released)?'})
-```
-![Taxii Service Walkthrough](images/taxii_service_walkthrough.gif)
-
     
 # Bug fixes
 ---
