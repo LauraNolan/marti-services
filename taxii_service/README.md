@@ -7,9 +7,9 @@ The current implementation of the taxii_services only allows connections to one 
 
 # Initial setup
 ---
-See the [MARTI_Configuration_Guide_v07.pdf](MARTI_Configuration_Guide_v07.pdf) for specific instructions.
+See the [MARTI_Configuration_Guide_v08.pdf](MARTI_Configuration_Guide_v08.pdf) for specific instructions.
 
-Section 9 discusses how to setup the taxii configuration in MARTI. Read the directions carefully to answer any questions you might have (refer to the [walkthrough](#walkthrough) for additional help).
+Section 9 discusses how to setup the taxii configuration in MARTI. Read the directions carefully to answer any questions you might have (refer to the TAXIIServiceConfigForm in [forms.py](forms.py) for additional help).
 
 Section 8 discusses how to add a new feed to the taxii configuration in MARTI.
 
