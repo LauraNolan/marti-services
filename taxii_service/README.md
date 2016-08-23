@@ -7,7 +7,7 @@ The current implementation of the taxii_services only allows connections to one 
 
 # Initial setup
 ---
-See the [MARTI Configuration Guide](MARTI_Configuration_Guide_v10.pdf) for specific instructions.
+See the [MARTI Configuration Guide](MARTI_Configuration_Guide_v11.pdf) for specific instructions.
 
 Section 9 discusses how to setup the taxii configuration in MARTI. Read the directions carefully to answer any questions you might have (refer to the TAXIIServiceConfigForm in [forms.py](forms.py) for additional help).
 
