@@ -9,6 +9,8 @@ The current implementation of the taxii_services only allows connections to one 
 ---
 See the [MARTI Configuration Guide](MARTI_Configuration_Guide_v11.pdf) for specific instructions.
 
+**Appendix A states: A reserved administrator account with username “taxii” must be created prior to configuring the taxii service. This account is used for sending and receiving stix messages via taxii. In addition, each MARTI instance must have a Source called “taxii” and each user must have the “taxii” Source in his/her list of enabled Sources. **
+
 Section 9 discusses how to setup the taxii configuration in MARTI. Read the directions carefully to answer any questions you might have (refer to the TAXIIServiceConfigForm in [forms.py](forms.py) for additional help).
 
 Section 8 discusses how to add a new feed to the taxii configuration in MARTI.
